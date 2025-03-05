@@ -34,7 +34,7 @@ public class DemoApplication {
         List<EkimIhr2> entityList = new ArrayList<>();
 
         try (
-                FileInputStream is = new FileInputStream(new File(filePath));
+                FileInputStream is = new FileInputStream(filePath);
                 Workbook workbook = StreamingReader.builder()
                         .rowCacheSize(100)  // Number of rows to keep in memory
                         .bufferSize(4096)   // Buffer size for streaming
@@ -53,7 +53,7 @@ public class DemoApplication {
 
                     EkimIhr2 entity = EkimIhr2.mapRowToEntity(row);
                     entityList.add(entity);
-                    System.out.println(entity.toString());
+                    System.out.println(entity);
                 }
             }
         } catch (IOException e) {
