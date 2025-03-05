@@ -1,14 +1,15 @@
-package com.excel.reader;
+package com.excel.reader.service;
 
 import com.excel.reader.entities.EkimIhr2;
-import com.excel.reader.service.EkimIhr2Service;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.util.IOUtils;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ApplicationContext;
+import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -22,22 +23,23 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-//@SpringBootApplication
-//@ComponentScan(basePackages = {"com.example.demo.*", "com.example.demo.entity", "com.example.demo.repo", "com.example.demo.service"})
-public class ParalelSaveV2 {
+@Service
+public class ParalelExcelReaderV2 {
+
+    @Autowired
+    private EkimIhr2Service service;
+
     private static final int BATCH_SIZE = 5000; // Adjust batch size for better performance
     private static final int THREAD_COUNT = 8; // Number of threads for parallel execution
     private static final ExecutorService executorService = Executors.newFixedThreadPool(THREAD_COUNT);
     private static final AtomicInteger processedRows = new AtomicInteger(0);
 
-    public static void test(String[] args) throws IOException {
-        ApplicationContext context = SpringApplication.run(ParalelSaveV2.class);
-        EkimIhr2Service service = context.getBean(EkimIhr2Service.class);
+    public void readFile() throws IOException {
         readExcelFileParallel("D:\\2023 İHR\\2023-EKİM-İHR-2.xlsx", service);
         shutdownExecutor();
     }
 
-    public static void readExcelFileParallel(String filePath, EkimIhr2Service service) throws IOException {
+    public void readExcelFileParallel(String filePath, EkimIhr2Service service) throws IOException {
         IOUtils.setByteArrayMaxOverride(444_740_852);
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) {
@@ -77,7 +79,7 @@ public class ParalelSaveV2 {
         }
     }
 
-    private static CompletableFuture<Void> saveBatchAsync(List<EkimIhr2> batch, EkimIhr2Service service) {
+    private CompletableFuture<Void> saveBatchAsync(List<EkimIhr2> batch, EkimIhr2Service service) {
         return CompletableFuture.runAsync(() -> {
             try {
                 service.saveAllEkimIhr2List(batch);
@@ -89,7 +91,7 @@ public class ParalelSaveV2 {
         }, executorService);
     }
 
-    private static void shutdownExecutor() {
+    private void shutdownExecutor() {
         executorService.shutdown();
         try {
             if (!executorService.awaitTermination(60, TimeUnit.SECONDS)) {

@@ -12,7 +12,6 @@ public class ExcelHelper {
         return ExcelHelper.getCellValue(cell);
     }
 
-
     public static String getCellValue(Cell cell) {
         if (cell == null) return "";
 
