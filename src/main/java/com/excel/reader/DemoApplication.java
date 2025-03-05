@@ -7,10 +7,12 @@ import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication
 public class DemoApplication {
+    // java -Xms2g -Xmx2g -jar ExcelHelper-0.0.1-SNAPSHOT.jar "C:\Logistic\02 1 ŞUBAT 1.xlsx"
     public static void main(String[] args) {
-       // SpringApplication.run(DemoApplication.class, args);
         ApplicationContext context = SpringApplication.run(DemoApplication.class);
         ExcelReader service = context.getBean(ExcelReader.class);
-        service.readExcelFileIteratorEasyExcel("D:\\2023 İHR\\2023-EKİM-İHR-2.xlsx");
+        service.processDirector(args);
     }
+
+
 }

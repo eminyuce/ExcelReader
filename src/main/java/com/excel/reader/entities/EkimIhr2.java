@@ -24,6 +24,9 @@ public class EkimIhr2 {
     @Column(name = "rowNumber")
     private Integer rowNumber;
 
+    @Column(name = "fileName")
+    private String fileName;
+
     @Column(name = "[TCGB  Gümrük İdaresi Kodu]")
     private String tcgbGumrukIdaresiKodu;
 
@@ -105,9 +108,10 @@ public class EkimIhr2 {
     @Column(name = "[İstatistiki Kıymet USD Değeri]")
     private String istatistikiKiymetUsdDegeri;
 
-    public static EkimIhr2 mapRowToEntity(Row row) {
+    public static EkimIhr2 mapRowToEntity(Row row, String fileName) {
         EkimIhr2 entity = new EkimIhr2();
         entity.setRowNumber(row.getRowNum());
+        entity.setFileName(fileName);
         entity.setTcgbGumrukIdaresiKodu(getStringCellValue(row, 0));
         entity.setTcgbGumrukIdaresiAdi(getStringCellValue(row, 1));
         entity.setTcgbTescilNo(getStringCellValue(row, 2));

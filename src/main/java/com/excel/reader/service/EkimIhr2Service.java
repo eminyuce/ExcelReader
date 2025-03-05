@@ -29,6 +29,7 @@ public class EkimIhr2Service {
     public void saveEkimIhr2(EkimIhr2 entity) {
         ekimIhr2Repository.saveEkimIhr2(
                 entity.getRowNumber(),
+                entity.getFileName(),
                 entity.getTcgbGumrukIdaresiKodu(),
                 entity.getTcgbGumrukIdaresiAdi(),
                 entity.getTcgbTescilNo(),
@@ -116,14 +117,15 @@ public class EkimIhr2Service {
             saveEkimIhr2Async(item);
         }
     }
+
     @Async
     @Transactional
     public void saveEkimIhr2Async(EkimIhr2 entity) {
         saveEkimIhr2(entity); // Delegate to the synchronous method
     }
 
-    public Integer getLastRowNumber() {
-        Integer lastRowNumber = ekimIhr2Repository.findLastRowNumber();
-        return lastRowNumber;
+    public Integer getLastRowNumber(String fileName) {
+        Integer lastRowNumber = ekimIhr2Repository.findLastRowNumber(fileName);
+        return lastRowNumber == null ? 0 : lastRowNumber;
     }
 }

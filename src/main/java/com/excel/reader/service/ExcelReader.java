@@ -19,28 +19,50 @@ import java.io.IOException;
 import java.util.Iterator;
 
 
-
 @Service
 public class ExcelReader {
 
     @Autowired
     private EkimIhr2Service service;
 
-    public void readExcelFileIteratorEasyExcel(String filePath) {
+    public void processDirector(String[] args) {
+        String pathname = args[0];
+        var directory = new File(pathname);
+
+        // Check if the directory exists and is a directory
+        if (directory.exists() && directory.isDirectory()) {
+            // List all files in the directory
+            String[] files = directory.list();
+
+            if (files != null) {
+                for (String fileName : files) {
+                    System.out.println("Processing FileName:" + pathname + "\\" + fileName);
+                    if (fileName.contains("Aralik")) continue;
+                    readExcelFileWithStreamingReader(pathname + "\\" + fileName);
+                }
+            } else {
+                System.out.println("The directory is empty.");
+            }
+        } else {
+            System.out.println("The specified path is not a valid directory.");
+        }
+    }
+
+    public void readExcelFileWithStreamingReader(String filePath) {
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) {
             System.out.println("The file does not exist or is not a valid file: " + filePath);
             return;
-        }else{
+        } else {
             System.out.println("Th file exists: " + filePath);
         }
 
         try (FileInputStream is = new FileInputStream(filePath);
-                Workbook workbook = StreamingReader.builder()
-                        .rowCacheSize(100)  // Number of rows to keep in memory
-                        .bufferSize(4096)   // Buffer size for streaming
-                        .open(is)) {
-            Integer lastRowNumber = service.getLastRowNumber();
+             Workbook workbook = StreamingReader.builder()
+                     .rowCacheSize(100)  // Number of rows to keep in memory
+                     .bufferSize(4096)   // Buffer size for streaming
+                     .open(is)) {
+            Integer lastRowNumber = service.getLastRowNumber(file.getName());
             System.out.println("The last Row Number: " + lastRowNumber);
             for (Sheet sheet : workbook) {
                 System.out.println("Reading Sheet: " + sheet.getSheetName());
@@ -54,8 +76,8 @@ public class ExcelReader {
                     }
                     if (row.getRowNum() <= lastRowNumber) continue;
 
-                    EkimIhr2 entity = EkimIhr2.mapRowToEntity(row);
-                    System.out.println(entity);
+                    EkimIhr2 entity = EkimIhr2.mapRowToEntity(row, file.getName());
+                    service.saveEkimIhr2Async(entity);
                 }
             }
         } catch (IOException e) {
@@ -71,7 +93,7 @@ public class ExcelReader {
             System.out.println("The file does not exist or is not a valid file: " + filePath);
             return;
         }
-        Integer lastRowNumber = service.getLastRowNumber();
+        Integer lastRowNumber = service.getLastRowNumber(file.getName());
         System.out.println("The last Row Number: " + lastRowNumber);
 
         FileInputStream fis = new FileInputStream(file);
@@ -85,7 +107,7 @@ public class ExcelReader {
             if (row.getRowNum() == 0) continue; // Skip header row
             if (row.getRowNum() <= lastRowNumber) continue;
 
-            service.saveEkimIhr2Async(EkimIhr2.mapRowToEntity(row));
+            service.saveEkimIhr2Async(EkimIhr2.mapRowToEntity(row, file.getName()));
             System.out.println("RowNumber: " + row.getRowNum());
         }
 
@@ -106,7 +128,7 @@ public class ExcelReader {
             return;
         }
 
-        Integer lastRowNumber = service.getLastRowNumber();
+        Integer lastRowNumber = service.getLastRowNumber(file.getName());
         System.out.println("The lastRowNumber: " + lastRowNumber);
 
         try (FileInputStream fis = new FileInputStream(file);
@@ -120,7 +142,7 @@ public class ExcelReader {
                 Row row = sheet.getRow(rowIndex);
                 if (row == null) continue; // Skip empty rows
 
-                service.saveEkimIhr2Async(EkimIhr2.mapRowToEntity(row));
+                service.saveEkimIhr2Async(EkimIhr2.mapRowToEntity(row, file.getName()));
                 System.out.println("RowNumber: " + row.getRowNum());
             }
         } finally {

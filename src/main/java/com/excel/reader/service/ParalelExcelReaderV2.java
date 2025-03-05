@@ -57,7 +57,7 @@ public class ParalelExcelReaderV2 {
 
             while (rowIterator.hasNext()) {
                 Row row = rowIterator.next();
-                records.add(EkimIhr2.mapRowToEntity(row));
+                records.add(EkimIhr2.mapRowToEntity(row, file.getName()));
 
                 if (records.size() >= BATCH_SIZE) {
                     futures.add(saveBatchAsync(new ArrayList<>(records), service));

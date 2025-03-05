@@ -11,13 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 public interface EkimIhr2Repository extends JpaRepository<EkimIhr2, Integer> {
 
-    @Query(value ="SELECT TOP (1) [rowNumber] FROM [dbo].[2023-eki̇m-i̇hr-2] order by [rowNumber] desc"
-            ,nativeQuery = true)
-    Integer findLastRowNumber();
+    @Query(value = "SELECT TOP (1) [rowNumber] FROM [dbo].[2023-eki̇m-i̇hr-2] where [fileName]=:fileName order by [rowNumber] desc"
+            , nativeQuery = true)
+    Integer findLastRowNumber(String fileName);
 
     @Modifying
     @Transactional
-    @Query(value = "EXEC saveEkimIhr2 :rowNumber, :tcgbGumrukIdaresiKodu, :tcgbGumrukIdaresiAdi, :tcgbTescilNo, :tcgbTescilTarihi, :tcgbKapanisTarihi, " +
+    @Query(value = "EXEC saveEkimIhr2 :rowNumber, :fileName, :tcgbGumrukIdaresiKodu, :tcgbGumrukIdaresiAdi, :tcgbTescilNo, :tcgbTescilTarihi, :tcgbKapanisTarihi, " +
             ":gondericiAliciVergiNo, :gondericiAliciAdi, :aliciAdi, :gidecegiUlke17Kodu, :gidecegiUlke17Adi, " +
             ":menseUlkeKodu, :menseUlkeAdi, :teslimSekliKodu, :kalemSiraNo, :kalemRejimKodu, :kalemRejimAciklamasi, " +
             ":gtipKodu, :gtipAciklamasi, :ticariTanimi31, :tcgbStatuAciklamasi, :faturaTutari, :faturaTutariDovizTuruKodu, " +
@@ -25,6 +25,7 @@ public interface EkimIhr2Repository extends JpaRepository<EkimIhr2, Integer> {
             nativeQuery = true)
     void saveEkimIhr2(
             @Param("rowNumber") Integer rowNumber,
+            @Param("fileName") String fileName,
             @Param("tcgbGumrukIdaresiKodu") String tcgbGumrukIdaresiKodu,
             @Param("tcgbGumrukIdaresiAdi") String tcgbGumrukIdaresiAdi,
             @Param("tcgbTescilNo") String tcgbTescilNo,
