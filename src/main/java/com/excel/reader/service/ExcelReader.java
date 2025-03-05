@@ -29,14 +29,21 @@ public class ExcelReader {
     private EkimIhr2Service service;
 
     public void readExcelFileIteratorEasyExcel(String filePath) {
+        File file = new File(filePath);
+        if (!file.exists() || !file.isFile()) {
+            System.out.println("The file does not exist or is not a valid file: " + filePath);
+            return;
+        }else{
+            System.out.println("Th file exists: " + filePath);
+        }
 
-        try (
-                FileInputStream is = new FileInputStream(filePath);
+        try (FileInputStream is = new FileInputStream(filePath);
                 Workbook workbook = StreamingReader.builder()
                         .rowCacheSize(100)  // Number of rows to keep in memory
                         .bufferSize(4096)   // Buffer size for streaming
                         .open(is)) {
-
+            Integer lastRowNumber = service.getLastRowNumber();
+            System.out.println("The last Row Number: " + lastRowNumber);
             for (Sheet sheet : workbook) {
                 System.out.println("Reading Sheet: " + sheet.getSheetName());
 
@@ -47,6 +54,7 @@ public class ExcelReader {
                         isFirstRow = false;
                         continue;  // Skip header row
                     }
+                    if (row.getRowNum() <= lastRowNumber) continue;
 
                     EkimIhr2 entity = EkimIhr2.mapRowToEntity(row);
                     System.out.println(entity);
@@ -66,7 +74,7 @@ public class ExcelReader {
             return;
         }
         Integer lastRowNumber = service.getLastRowNumber();
-        System.out.println("The lastRowNumber: " + lastRowNumber);
+        System.out.println("The last Row Number: " + lastRowNumber);
 
         FileInputStream fis = new FileInputStream(file);
         Workbook workbook = new XSSFWorkbook(fis);
