@@ -1,8 +1,6 @@
 package com.excel.reader;
 
-import com.excel.reader.service.EkimIhr2Service;
 import com.excel.reader.service.ExcelReader;
-import com.excel.reader.service.ParalelExcelReaderV2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
