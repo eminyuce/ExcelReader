@@ -24,7 +24,7 @@ public class ExportImport {
     @Column(name = "Sheet_Name", length = 255)
     private String sheetName;  // File name field
 
-    @Column(name = "Row_Number", nullable = false)
+    @Column(name = "Row_Int", nullable = false)
     private Integer rowNumber;  // Row number field
 
     @Column(name = "Row_Data", nullable = false, columnDefinition = "NVARCHAR(MAX)")

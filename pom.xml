@@ -27,6 +27,15 @@
     </properties>
 
 	<dependencies>
+
+			<!-- MySQL Connector/J (JDBC Driver) -->
+			<dependency>
+				<groupId>mysql</groupId>
+				<artifactId>mysql-connector-java</artifactId>
+				<version>8.0.32</version> <!-- You can change this version based on your requirement -->
+			</dependency>
+
+
 		<!-- Apache Commons Lang -->
 		<dependency>
 			<groupId>org.apache.commons</groupId>

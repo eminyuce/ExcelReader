@@ -28,9 +28,6 @@ public class ExcelJsonWriter {
     private  ExportImportService exportImportService;
     private static final ObjectMapper  objectMapper = new ObjectMapper();
 
-    // Constructor injection for better dependency management
-
-
     public void processDirector(String pathname) {
         File directory = new File(pathname);
 
@@ -71,12 +68,16 @@ public class ExcelJsonWriter {
         }
 
         logger.info("The file exists: {}", filePath);
-        String normalizedFileName = file.getName(); //normalizeFileName(file.getName());
+        String normalizedFileName = file.getName();
+
+        // Batch size - adjust this value based on your needs
+        final int BATCH_SIZE = 1000;
+        List<ExportImport> batchRecords = new ArrayList<>(BATCH_SIZE);
 
         try (FileInputStream is = new FileInputStream(filePath);
              Workbook workbook = StreamingReader.builder()
-                     .rowCacheSize(3)  // Number of rows to keep in memory
-                     .bufferSize(4096)  // Buffer size for streaming
+                     .rowCacheSize(5000)
+                     .bufferSize(4096)
                      .open(is)) {
 
             for (Sheet sheet : workbook) {
@@ -84,14 +85,14 @@ public class ExcelJsonWriter {
 
                 boolean isFirstRow = true;
                 List<String> headers = new ArrayList<>();
-                if (exportImportService.isLastRowForFileProceed(normalizedFileName,sheet.getSheetName(), sheet.getLastRowNum())) {
+                if (exportImportService.isLastRowForFileProceed(normalizedFileName, sheet.getSheetName(), sheet.getLastRowNum())) {
                     logger.info("The file already proceed: {}", filePath);
                     continue;
                 }
-                for (Row row : sheet) {
-                    int rowNumber = row.getRowNum() + 1; // 1-based row number
 
-                    // Skip if the record already exists
+                for (Row row : sheet) {
+                    int rowNumber = row.getRowNum() + 1;
+
                     ExportImport exportImport = new ExportImport();
                     exportImport.setFileName(normalizedFileName);
                     exportImport.setSheetName(sheet.getSheetName());
@@ -105,11 +106,9 @@ public class ExcelJsonWriter {
 
                     if (isFirstRow) {
                         isFirstRow = false;
-                        // Capture the header row
                         for (Cell cell : row) {
                             headers.add(getCellValue(cell));
                         }
-                        // Save headers as a separate entry
                         saveHeaderRow(normalizedFileName, sheet.getSheetName(), headers);
                         continue;
                     }
@@ -128,10 +127,23 @@ public class ExcelJsonWriter {
                     // Convert row to JSON
                     String rowJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rowData);
 
-                    // Save row to database
+                    // Add to batch
                     exportImport.setRowData(rowJson);
-                    exportImportService.save(exportImport);
-                    logger.info("Saved Row {}: {}", rowNumber, exportImport);
+                    batchRecords.add(exportImport);
+
+                    // Save batch when it reaches the batch size
+                    if (batchRecords.size() >= BATCH_SIZE) {
+                        exportImportService.saveBatch(batchRecords);
+                        logger.info("Saved batch of {} rows for sheet: {}", batchRecords.size(), sheet.getSheetName());
+                        batchRecords.clear();
+                    }
+                }
+
+                // Save any remaining records in the batch
+                if (!batchRecords.isEmpty()) {
+                    exportImportService.saveBatch(batchRecords);
+                    logger.info("Saved final batch of {} rows for sheet: {}", batchRecords.size(), sheet.getSheetName());
+                    batchRecords.clear();
                 }
             }
         } catch (IOException e) {
@@ -203,23 +215,6 @@ public class ExcelJsonWriter {
         }
     }
 
-    // Normalize file names to match database representation
-    private String normalizeFileName(String fileName) {
-        return fileName
-                .replace(" ", "_")
-                .replace("Ş", "S")
-                .replace("ş", "s")
-                .replace("İ", "I")
-                .replace("ı", "i")
-                .replace("Ğ", "G")
-                .replace("ğ", "g")
-                .replace("Ü", "U")
-                .replace("ü", "u")
-                .replace("Ç", "C")
-                .replace("ç", "c")
-                .replace("Ö", "O")
-                .replace("ö", "o");
-    }
 
     // Save header row as a separate entry
     private void saveHeaderRow(String fileName, String sheetName, List<String> headers) throws IOException {
