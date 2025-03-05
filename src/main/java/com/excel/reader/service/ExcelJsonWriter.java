@@ -82,7 +82,8 @@ public class ExcelJsonWriter {
                     exportImport.setFileName(file.getName());
                     exportImport.setSheetName(sheet.getSheetName());
                     exportImport.setRowNumber(rowNumber);
-
+                    // Check if the record exists
+                    // If the record doesn't exist, call stored procedure or save the entity
                     var exists = exportImportService.checkIfExportImportExists(exportImport);
                     if (exists == 0) {
 
