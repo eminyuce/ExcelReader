@@ -28,4 +28,7 @@ public class ExportImportService {
         exportImportRepository.save(exportImport);
     }
 
+    public boolean isLastRowForFileProceed(String normalizedFileName, String sheetName, int lastRowNum) {
+        return exportImportRepository.isLastRowForFileProceed(normalizedFileName,sheetName,lastRowNum);
+    }
 }
