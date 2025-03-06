@@ -1,6 +1,10 @@
 package com.excel.reader.service;
 
 import com.excel.reader.entities.ExportImport;
+import com.excel.reader.entities.ExportImportAralik;
+import com.excel.reader.entities.ExportImportOther;
+import com.excel.reader.util.ExcelHelper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.pjfanning.xlsx.StreamingReader;
 import org.apache.poi.ss.usermodel.Cell;
@@ -23,10 +27,19 @@ import static com.excel.reader.util.ExcelHelper.getCellValue;
 public class ExcelJsonWriter {
 
     private static final Logger logger = LoggerFactory.getLogger(ExcelJsonWriter.class);
+    // Batch size - adjust this value based on your needs
+    final int BATCH_SIZE = 500;
 
     @Autowired
-    private  ExportImportService exportImportService;
-    private static final ObjectMapper  objectMapper = new ObjectMapper();
+    private ExportImportService exportImportService;
+
+    @Autowired
+    private ExportImportAralikService exportImportAralikService;
+
+    @Autowired
+    private ExportImportOtherService exportImportOtherService;
+
+    private static final ObjectMapper objectMapper = new ObjectMapper();
 
     public void processDirector(String pathname) {
         File directory = new File(pathname);
@@ -70,8 +83,7 @@ public class ExcelJsonWriter {
         logger.info("The file exists: {}", filePath);
         String normalizedFileName = file.getName();
 
-        // Batch size - adjust this value based on your needs
-        final int BATCH_SIZE = 1000;
+
         List<ExportImport> batchRecords = new ArrayList<>(BATCH_SIZE);
 
         try (FileInputStream is = new FileInputStream(filePath);
@@ -82,70 +94,89 @@ public class ExcelJsonWriter {
 
             for (Sheet sheet : workbook) {
                 logger.info("Reading Sheet: {}", sheet.getSheetName());
-                int lastRowNumber =  exportImportService.findLastRowNumber(normalizedFileName, sheet.getSheetName());
+                int lastRowNumber = exportImportService.findLastRowNumber(normalizedFileName, sheet.getSheetName());
                 boolean isFirstRow = true;
                 List<String> headers = new ArrayList<>();
-//                if (exportImportService.isLastRowForFileProceed(normalizedFileName, sheet.getSheetName(), sheet.getLastRowNum())) {
-//                    logger.info("The file already proceed: {}", filePath);
-//                    continue;
-//                }
 
                 for (Row row : sheet) {
-                    if (row.getRowNum() <= lastRowNumber) continue;
-                    int rowNumber = row.getRowNum() + 1;
+                    try {
 
-                    ExportImport exportImport = new ExportImport();
-                    exportImport.setFileName(normalizedFileName);
-                    exportImport.setSheetName(sheet.getSheetName());
-                    exportImport.setRowNumber(rowNumber);
+                        int rowNumber = row.getRowNum() + 1;
+                        if (isFirstRow) {
+                            isFirstRow = false;
+                            for (Cell cell : row) {
+                                headers.add(ExcelHelper.removeDuplicateSpaces(getCellValue(cell)));
+                            }
+                            continue;
+                        }
 
-//                    if (exportImportService.checkIfExportImportExists(exportImport) != 0) {
-//                        logger.debug("Record already exists for file: {}, sheet: {}, row: {}",
-//                                normalizedFileName, sheet.getSheetName(), rowNumber);
-//                        continue;
-//                    }
+                        if (row.getRowNum() <= lastRowNumber) continue;
 
-                    if (isFirstRow) {
-                        isFirstRow = false;
+                        // Process data row
+                        Map<String, Object> rowData = new LinkedHashMap<>();
+                        int cellIndex = 0;
                         for (Cell cell : row) {
-                            headers.add(getCellValue(cell));
+                            if (cellIndex < headers.size()) {
+                                rowData.put(headers.get(cellIndex), getCellValue(cell));
+                            }
+                            cellIndex++;
                         }
-                        saveHeaderRow(normalizedFileName, sheet.getSheetName(), headers);
-                        continue;
-                    }
 
-                    // Process data row
-                    Map<String, Object> rowData = new LinkedHashMap<>();
-                    int cellIndex = 0;
-                    for (Cell cell : row) {
-                        if (cellIndex < headers.size()) {
-                            rowData.put(headers.get(cellIndex), getCellValue(cell));
+                        // Convert row to JSON
+                        String rowJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rowData);
+                        if(normalizedFileName.contains("Aralık")){
+                            try {
+                                logger.info("ExportImportAralik.rowJson:"+rowJson);
+                                var item = objectMapper.readValue(rowJson, ExportImportAralik.class);
+                                item.setFileName(normalizedFileName);
+                                item.setSheetName(sheet.getSheetName());
+                                item.setRowInt(rowNumber);
+                                logger.info("ExportImportAralik:"+item);
+                                exportImportAralikService.save(item);
+                            } catch (JsonProcessingException e) {
+                                logger.error("ExportImportAralik Exception:",e);
+                            }
+                        }else{
+                            try {
+                                logger.info("ExportImportOther.rowJson:"+rowJson);
+                                var item = objectMapper.readValue(rowJson, ExportImportOther.class);
+                                item.setFileName(normalizedFileName);
+                                item.setSheetName(sheet.getSheetName());
+                                item.setRowInt(rowNumber);
+                                logger.info("ExportImportOther:"+item);
+                                exportImportOtherService.save(item);
+                            } catch (JsonProcessingException e) {
+                                logger.error("ExportImportOther:",e);
+                            }
                         }
-                        cellIndex++;
-                    }
-                    rowData.put("sheetName", sheet.getSheetName());
+                        ExportImport exportImport = new ExportImport();
+                        exportImport.setFileName(normalizedFileName);
+                        exportImport.setSheetName(sheet.getSheetName());
+                        exportImport.setRowNumber(rowNumber);
+                        // Add to batch
+                        exportImport.setRowData(rowJson);
+                        batchRecords.add(exportImport);
 
-                    // Convert row to JSON
-                    String rowJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rowData);
+                        // Save batch when it reaches the batch size
+                        if (batchRecords.size() >= BATCH_SIZE) {
 
-                    // Add to batch
-                    exportImport.setRowData(rowJson);
-                    batchRecords.add(exportImport);
+                            logger.info("Saved batch of {} rows for sheet: {}", batchRecords.size(), sheet.getSheetName());
+                            batchRecords.clear();
+                            break;
+                        }
 
-                    // Save batch when it reaches the batch size
-                    if (batchRecords.size() >= BATCH_SIZE) {
-                        exportImportService.saveBatch(batchRecords);
-                        logger.info("Saved batch of {} rows for sheet: {}", batchRecords.size(), sheet.getSheetName());
-                        batchRecords.clear();
+                    } catch (Exception e) {
+                        logger.error("Exception", e);
                     }
                 }
 
                 // Save any remaining records in the batch
                 if (!batchRecords.isEmpty()) {
-                    exportImportService.saveBatch(batchRecords);
+
                     logger.info("Saved final batch of {} rows for sheet: {}", batchRecords.size(), sheet.getSheetName());
                     batchRecords.clear();
                 }
+                break;
             }
         } catch (IOException e) {
             logger.error("Error reading Excel file: {}", filePath, e);
@@ -216,22 +247,4 @@ public class ExcelJsonWriter {
         }
     }
 
-
-    // Save header row as a separate entry
-    private void saveHeaderRow(String fileName, String sheetName, List<String> headers) throws IOException {
-        ExportImport headerEntry = new ExportImport();
-        headerEntry.setFileName(fileName);
-        headerEntry.setSheetName(sheetName);
-        headerEntry.setRowNumber(0); // Header row as 0
-
-        if (exportImportService.checkIfExportImportExists(headerEntry) == 0) {
-            Map<String, Object> headerData = new LinkedHashMap<>();
-            headerData.put("sheetName", sheetName);
-            headerData.put("headers", headers);
-            String headerJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(headerData);
-            headerEntry.setRowData(headerJson);
-            exportImportService.save(headerEntry);
-            logger.info("Saved Header: {}", headerEntry);
-        }
-    }
 }

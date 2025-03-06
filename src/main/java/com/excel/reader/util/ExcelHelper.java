@@ -11,7 +11,16 @@ public class ExcelHelper {
         Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
         return ExcelHelper.getCellValue(cell);
     }
+    public static String removeDuplicateSpaces(String input) {
+        if (input == null || input.isEmpty()) {
+            return input;
+        }
 
+        // Replace multiple spaces with a single space
+        String result = input.replaceAll("\\s+", " ");
+
+        return result;
+    }
     public static String getCellValue(Cell cell) {
         if (cell == null) return "";
 
