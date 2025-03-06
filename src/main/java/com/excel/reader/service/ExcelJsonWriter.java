@@ -82,15 +82,16 @@ public class ExcelJsonWriter {
 
             for (Sheet sheet : workbook) {
                 logger.info("Reading Sheet: {}", sheet.getSheetName());
-
+                int lastRowNumber =  exportImportService.findLastRowNumber(normalizedFileName, sheet.getSheetName());
                 boolean isFirstRow = true;
                 List<String> headers = new ArrayList<>();
-                if (exportImportService.isLastRowForFileProceed(normalizedFileName, sheet.getSheetName(), sheet.getLastRowNum())) {
-                    logger.info("The file already proceed: {}", filePath);
-                    continue;
-                }
+//                if (exportImportService.isLastRowForFileProceed(normalizedFileName, sheet.getSheetName(), sheet.getLastRowNum())) {
+//                    logger.info("The file already proceed: {}", filePath);
+//                    continue;
+//                }
 
                 for (Row row : sheet) {
+                    if (row.getRowNum() <= lastRowNumber) continue;
                     int rowNumber = row.getRowNum() + 1;
 
                     ExportImport exportImport = new ExportImport();
@@ -98,11 +99,11 @@ public class ExcelJsonWriter {
                     exportImport.setSheetName(sheet.getSheetName());
                     exportImport.setRowNumber(rowNumber);
 
-                    if (exportImportService.checkIfExportImportExists(exportImport) != 0) {
-                        logger.debug("Record already exists for file: {}, sheet: {}, row: {}",
-                                normalizedFileName, sheet.getSheetName(), rowNumber);
-                        continue;
-                    }
+//                    if (exportImportService.checkIfExportImportExists(exportImport) != 0) {
+//                        logger.debug("Record already exists for file: {}, sheet: {}, row: {}",
+//                                normalizedFileName, sheet.getSheetName(), rowNumber);
+//                        continue;
+//                    }
 
                     if (isFirstRow) {
                         isFirstRow = false;

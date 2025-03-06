@@ -14,6 +14,10 @@ public interface ExportImportRepository extends JpaRepository<ExportImport, Inte
     @Query("SELECT CASE WHEN COUNT(e) > 0 THEN 1 ELSE 0 END FROM ExportImport e WHERE e.fileName = :fileName AND e.sheetName = :sheetName AND e.rowNumber = :rowNumber")
     int checkIfExportImportExists(String fileName, String sheetName, int rowNumber);
 
+    @Query("SELECT e.rowNumber FROM ExportImport e WHERE e.fileName = :fileName AND e.sheetName = :sheetName ORDER BY e.rowNumber DESC LIMIT 1")
+    Integer findLastRowNumber(@Param("fileName") String fileName,
+                              @Param("sheetName") String sheetName);
+
     @Query("SELECT CASE WHEN MAX(e.rowNumber) = :lastRowNum THEN true ELSE false END FROM ExportImport e " +
             "WHERE e.fileName = :normalizedFileName AND e.sheetName = :sheetName")
     boolean isLastRowForFileProceed(@Param("normalizedFileName") String normalizedFileName,

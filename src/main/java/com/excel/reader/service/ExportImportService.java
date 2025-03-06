@@ -4,6 +4,7 @@ import com.excel.reader.entities.ExportImport;
 import com.excel.reader.repo.ExportImportRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -34,5 +35,12 @@ public class ExportImportService {
     @Transactional
     public void saveBatch(List<ExportImport> records) {
         exportImportRepository.saveAll(records); // JPA's batch save
+    }
+
+    public  int findLastRowNumber(String fileName, String sheetName){
+        Integer lastRowNumber = exportImportRepository.findLastRowNumber(fileName, sheetName);
+        var result =  lastRowNumber == null ? 0 : lastRowNumber;
+        System.out.println("lastRowNumber:"+result);
+        return result;
     }
 }
