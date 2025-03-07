@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
+
 @Entity
 @Getter
 @Setter
@@ -13,7 +15,8 @@ import lombok.*;
 @EqualsAndHashCode
 @Builder
 @Table(name = "export_import_others") // Assuming the table name is export_import_others
-public class ExportImportOther {
+public class ExportImportOther implements Serializable {
+    private static final long serialVersionUID = 1L;
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

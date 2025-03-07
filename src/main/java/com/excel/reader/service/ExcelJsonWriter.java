@@ -52,11 +52,11 @@ public class ExcelJsonWriter {
 
         // List all files in the directory
         File[] files = directory.listFiles();
-        if (files != null) {
-            List<File> fileList = Arrays.asList(files);
-            Collections.reverse(fileList);
-            files = fileList.toArray(new File[0]); // Convert back to array if needed
-        }
+//        if (files != null) {
+//            List<File> fileList = Arrays.asList(files);
+//            Collections.reverse(fileList);
+//            files = fileList.toArray(new File[0]); // Convert back to array if needed
+//        }
         if (files == null || files.length == 0) {
             logger.warn("The directory is empty: {}", pathname);
             return;
@@ -83,8 +83,9 @@ public class ExcelJsonWriter {
         logger.info("The file exists: {}", filePath);
         String normalizedFileName = file.getName();
 
-
-        List<ExportImport> batchRecords = new ArrayList<>(BATCH_SIZE);
+        // Batch lists for Aralik and Other entities
+        List<ExportImportAralik> aralikBatch = new ArrayList<>(BATCH_SIZE);
+        List<ExportImportOther> otherBatch = new ArrayList<>(BATCH_SIZE);
 
         try (FileInputStream is = new FileInputStream(filePath);
              Workbook workbook = StreamingReader.builder()
@@ -100,7 +101,6 @@ public class ExcelJsonWriter {
 
                 for (Row row : sheet) {
                     try {
-
                         int rowNumber = row.getRowNum() + 1;
                         if (isFirstRow) {
                             isFirstRow = false;
@@ -124,58 +124,69 @@ public class ExcelJsonWriter {
 
                         // Convert row to JSON
                         String rowJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rowData);
-                        if(normalizedFileName.contains("Aralık")){
+
+                        // Process based on file name
+                        if(normalizedFileName.contains("Aralık")) {
                             try {
-                                logger.info("ExportImportAralik.rowJson:"+rowJson);
+                                logger.debug("ExportImportAralik.rowJson:" + rowJson);
                                 var item = objectMapper.readValue(rowJson, ExportImportAralik.class);
                                 item.setFileName(normalizedFileName);
                                 item.setSheetName(sheet.getSheetName());
                                 item.setRowInt(rowNumber);
-                                logger.info("ExportImportAralik:"+item);
-                                exportImportAralikService.save(item);
+
+                                // Add to batch list
+                                aralikBatch.add(item);
+
+                                // Check if batch size reached
+                                if (aralikBatch.size() >= BATCH_SIZE) {
+                                    exportImportAralikService.saveAll(aralikBatch);
+                                    logger.info("Saved batch of {} Aralik records", aralikBatch.size());
+                                    aralikBatch.clear();
+                                }
                             } catch (JsonProcessingException e) {
-                                logger.error("ExportImportAralik Exception:",e);
+                                logger.error("ExportImportAralik Exception:", e);
                             }
-                        }else{
+                        } else {
                             try {
-                                logger.info("ExportImportOther.rowJson:"+rowJson);
+                                logger.debug("ExportImportOther.rowJson:" + rowJson);
                                 var item = objectMapper.readValue(rowJson, ExportImportOther.class);
                                 item.setFileName(normalizedFileName);
                                 item.setSheetName(sheet.getSheetName());
                                 item.setRowInt(rowNumber);
-                                logger.info("ExportImportOther:"+item);
-                                exportImportOtherService.save(item);
+
+                                // Add to batch list
+                                otherBatch.add(item);
+
+                                // Check if batch size reached
+                                if (otherBatch.size() >= BATCH_SIZE) {
+                                    exportImportOtherService.saveAll(otherBatch);
+                                    logger.info("Saved batch of {} Other records", otherBatch.size());
+                                    otherBatch.clear();
+                                }
                             } catch (JsonProcessingException e) {
-                                logger.error("ExportImportOther:",e);
+                                logger.error("ExportImportOther:", e);
                             }
                         }
-                        ExportImport exportImport = new ExportImport();
-                        exportImport.setFileName(normalizedFileName);
-                        exportImport.setSheetName(sheet.getSheetName());
-                        exportImport.setRowNumber(rowNumber);
-                        // Add to batch
-                        exportImport.setRowData(rowJson);
-                        batchRecords.add(exportImport);
-
-                        // Save batch when it reaches the batch size
-                        if (batchRecords.size() >= BATCH_SIZE) {
-
-                            logger.info("Saved batch of {} rows for sheet: {}", batchRecords.size(), sheet.getSheetName());
-                            batchRecords.clear();
-                            break;
-                        }
-
                     } catch (Exception e) {
                         logger.error("Exception", e);
                     }
                 }
 
-                // Save any remaining records in the batch
-                if (!batchRecords.isEmpty()) {
 
-                    logger.info("Saved final batch of {} rows for sheet: {}", batchRecords.size(), sheet.getSheetName());
-                    batchRecords.clear();
+                // Save remaining Aralik records
+                if (!aralikBatch.isEmpty()) {
+                    exportImportAralikService.saveAll(aralikBatch);
+                    logger.info("Saved final batch of {} Aralik records", aralikBatch.size());
+                    aralikBatch.clear();
                 }
+
+                // Save remaining Other records
+                if (!otherBatch.isEmpty()) {
+                    exportImportOtherService.saveAll(otherBatch);
+                    logger.info("Saved final batch of {} Other records", otherBatch.size());
+                    otherBatch.clear();
+                }
+
                 break;
             }
         } catch (IOException e) {

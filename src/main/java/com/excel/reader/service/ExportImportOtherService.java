@@ -2,12 +2,37 @@ package com.excel.reader.service;
 
 import com.excel.reader.entities.ExportImportAralik;
 import com.excel.reader.entities.ExportImportOther;
+import com.excel.reader.entities.dto.ExportImportOtherDTO;
 import com.excel.reader.repo.ExportImportOtherRespository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.ParameterMode;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.StoredProcedureQuery;
+import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
+import com.microsoft.sqlserver.jdbc.SQLServerPreparedStatement;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.datasource.DataSourceUtils;
+import org.springframework.stereotype.Service;
+
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.Types;
+import java.util.List;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class ExportImportOtherService {
+    private static final Logger logger = LoggerFactory.getLogger(ExportImportOtherService.class);
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
 
     @Autowired
     private  ExportImportOtherRespository exportImportOtherRespository;
@@ -16,4 +41,151 @@ public class ExportImportOtherService {
         exportImportOtherRespository.save(item);
     }
 
+    public void saveAll(List<ExportImportOther> otherBatch) {
+        //exportImportOtherRespository.saveAll(otherBatch);
+        this.batchInsert(otherBatch);
+    }
+
+    @Autowired
+    private DataSource dataSource;
+
+    @Transactional
+    public int batchInsert(List<ExportImportOther> entities) {
+        List<ExportImportOtherDTO> dtos = entities.stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+
+        try (Connection connection = DataSourceUtils.getConnection(dataSource)) {
+            // Unwrap the HikariCP connection to get the native SQL Server connection
+            com.microsoft.sqlserver.jdbc.SQLServerConnection sqlServerConnection =
+                    connection.unwrap(com.microsoft.sqlserver.jdbc.SQLServerConnection.class);
+
+            // Create SQLServerDataTable matching the table type
+            SQLServerDataTable dataTable = new SQLServerDataTable();
+            dataTable.addColumnMetadata("alıcı_adı", Types.NVARCHAR);
+            dataTable.addColumnMetadata("fatura_tutarı", Types.NVARCHAR);
+            dataTable.addColumnMetadata("fatura_tutarı_döviz_türü_kodu", Types.NVARCHAR);
+            dataTable.addColumnMetadata("file_name", Types.VARCHAR);
+            dataTable.addColumnMetadata("gideceği_ülke_adı", Types.NVARCHAR);
+            dataTable.addColumnMetadata("gideceği_ülke_kodu", Types.NVARCHAR);
+            dataTable.addColumnMetadata("gönderici_alıcı_adı", Types.NVARCHAR);
+            dataTable.addColumnMetadata("gönderici_alıcı_vergi_no", Types.NVARCHAR);
+            dataTable.addColumnMetadata("gtip_açıklaması", Types.NVARCHAR);
+            dataTable.addColumnMetadata("gtip_kodu", Types.NVARCHAR);
+            dataTable.addColumnMetadata("hesaplanmış_kalem_kıymeti_usd_değeri", Types.NVARCHAR);
+            dataTable.addColumnMetadata("i̇statistiki_kıymet_usd_değeri", Types.NVARCHAR);
+            dataTable.addColumnMetadata("kalem_rejim_açıklaması", Types.NVARCHAR);
+            dataTable.addColumnMetadata("kalem_rejim_açıklması", Types.NVARCHAR);
+            dataTable.addColumnMetadata("kalem_rejim_kodu", Types.NVARCHAR);
+            dataTable.addColumnMetadata("kalem_sıra_no", Types.NVARCHAR);
+            dataTable.addColumnMetadata("menşe_ülke_adı", Types.NVARCHAR);
+            dataTable.addColumnMetadata("menşe_ülke_kodu", Types.NVARCHAR);
+            dataTable.addColumnMetadata("net_ağırlık_kg", Types.NVARCHAR);
+            dataTable.addColumnMetadata("ölçü_birimi_açıklaması", Types.NVARCHAR);
+            dataTable.addColumnMetadata("ölçü_eşya_miktarı", Types.NVARCHAR);
+            dataTable.addColumnMetadata("row_int", Types.INTEGER);
+            dataTable.addColumnMetadata("sheet_name", Types.VARCHAR);
+            dataTable.addColumnMetadata("tcgb_gümrük_i̇daresi_adı", Types.NVARCHAR);
+            dataTable.addColumnMetadata("tcgb_gümrük_i̇daresi_kodu", Types.NVARCHAR);
+            dataTable.addColumnMetadata("tcgb_kapanış_tarihi", Types.NVARCHAR);
+            dataTable.addColumnMetadata("tcgb_statü_açıklaması", Types.NVARCHAR);
+            dataTable.addColumnMetadata("tcgb_tescil_no", Types.NVARCHAR);
+            dataTable.addColumnMetadata("tcgb_tescil_tarihi", Types.NVARCHAR);
+            dataTable.addColumnMetadata("teslim_şekli_kodu", Types.NVARCHAR);
+            dataTable.addColumnMetadata("ticari_tanımı", Types.NVARCHAR);
+
+
+            // Populate the data table with DTO data
+            for (ExportImportOtherDTO dto : dtos) {
+                dataTable.addRow(
+                        dto.getAliciAdi(),                          // String (NVARCHAR)
+                        dto.getFaturaTutari(),                      // String (NVARCHAR)
+                        dto.getFaturaTutariDovizTuruKodu(),         // String (NVARCHAR)
+                        dto.getFileName(),                          // String (VARCHAR)
+                        dto.getGidecegiUlkeAdi(),                   // String (NVARCHAR)
+                        dto.getGidecegiUlkeKodu(),                  // String (NVARCHAR)
+                        dto.getGondericiAliciAdi(),                 // String (NVARCHAR)
+                        dto.getGondericiAliciVergiNo(),             // String (NVARCHAR)
+                        dto.getGtipAciklamasi(),                    // String (NVARCHAR)
+                        dto.getGtipKodu(),                          // String (NVARCHAR)
+                        dto.getHesaplanmisKalemKiymetiUsdDegeri(),  // String (NVARCHAR)
+                        dto.getIstatistikiKiymetUsdDegeri(),        // String (NVARCHAR)
+                        dto.getKalemRejimAciklamasi(),              // String (NVARCHAR)
+                        dto.getKalemRejimAciklmasi(),               // String (NVARCHAR)
+                        dto.getKalemRejimKodu(),                    // String (NVARCHAR)
+                        dto.getKalemSiraNo(),                       // String (NVARCHAR)
+                        dto.getMenseUlkeAdi(),                      // String (NVARCHAR)
+                        dto.getMenseUlkeKodu(),                     // String (NVARCHAR)
+                        dto.getNetAgirlikKg(),                      // String (NVARCHAR)
+                        dto.getOlcuBirimiAciklamasi(),              // String (NVARCHAR)
+                        dto.getOlcuEsyaMiktari(),                   // String (NVARCHAR)
+                        dto.getRowInt(),                            // Integer (INTEGER)
+                        dto.getSheetName(),                         // String (VARCHAR)
+                        dto.getTcgbGumrukIdaresiAdi(),              // String (NVARCHAR)
+                        dto.getTcgbGumrukIdaresiKodu(),             // String (NVARCHAR)
+                        dto.getTcgbKapanisTarihi(),                 // String (NVARCHAR)
+                        dto.getTcgbStatuAciklamasi(),               // String (NVARCHAR)
+                        dto.getTcgbTescilNo(),                      // String (NVARCHAR)
+                        dto.getTcgbTescilTarihi(),                  // String (NVARCHAR)
+                        dto.getTeslimSekliKodu(),                   // String (NVARCHAR)
+                        dto.getTicariTanimi()                       // String (NVARCHAR)
+                );
+            }
+
+            // Execute the stored procedure using the unwrapped connection
+            String sql = "{call usp_BatchInsertExportImportOthers(?)}";
+            try (SQLServerPreparedStatement stmt = (SQLServerPreparedStatement) sqlServerConnection.prepareStatement(sql)) {
+                stmt.setStructured(1, "dbo.ExportImportOthersType", dataTable);
+                stmt.execute();
+
+                // Get the affected rows from the result set
+                if (stmt.getMoreResults()) {
+                    try (var rs = stmt.getResultSet()) {
+                        if (rs.next()) {
+                            return rs.getInt(1);
+                        }
+                    }
+                }
+                return 0; // Default return if no result set
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to execute batch insert", e);
+        }
+    }
+
+    private ExportImportOtherDTO convertToDTO(ExportImportOther entity) {
+        return ExportImportOtherDTO.builder()
+                .rowInt(entity.getRowInt())
+                .fileName(entity.getFileName())
+                .sheetName(entity.getSheetName())
+                .tcgbGumrukIdaresiKodu(entity.getTcgbGumrukIdaresiKodu())
+                .tcgbGumrukIdaresiAdi(entity.getTcgbGumrukIdaresiAdi())
+                .tcgbTescilNo(entity.getTcgbTescilNo())
+                .tcgbTescilTarihi(entity.getTcgbTescilTarihi())
+                .tcgbKapanisTarihi(entity.getTcgbKapanisTarihi())
+                .gondericiAliciVergiNo(entity.getGondericiAliciVergiNo())
+                .gondericiAliciAdi(entity.getGondericiAliciAdi())
+                .aliciAdi(entity.getAliciAdi())
+                .gidecegiUlkeKodu(entity.getGidecegiUlkeKodu())
+                .gidecegiUlkeAdi(entity.getGidecegiUlkeAdi())
+                .menseUlkeKodu(entity.getMenseUlkeKodu())
+                .menseUlkeAdi(entity.getMenseUlkeAdi())
+                .teslimSekliKodu(entity.getTeslimSekliKodu())
+                .kalemSiraNo(entity.getKalemSiraNo())
+                .kalemRejimKodu(entity.getKalemRejimKodu())
+                .kalemRejimAciklamasi(entity.getKalemRejimAciklamasi())
+                .kalemRejimAciklmasi(entity.getKalemRejimAciklmasi())
+                .gtipKodu(entity.getGtipKodu())
+                .gtipAciklamasi(entity.getGtipAciklamasi())
+                .ticariTanimi(entity.getTicariTanimi())
+                .tcgbStatuAciklamasi(entity.getTcgbStatuAciklamasi())
+                .faturaTutari(entity.getFaturaTutari())
+                .faturaTutariDovizTuruKodu(entity.getFaturaTutariDovizTuruKodu())
+                .olcuEsyaMiktari(entity.getOlcuEsyaMiktari())
+                .olcuBirimiAciklamasi(entity.getOlcuBirimiAciklamasi())
+                .netAgirlikKg(entity.getNetAgirlikKg())
+                .hesaplanmisKalemKiymetiUsdDegeri(entity.getHesaplanmisKalemKiymetiUsdDegeri())
+                .istatistikiKiymetUsdDegeri(entity.getIstatistikiKiymetUsdDegeri())
+                .build();
+    }
 }

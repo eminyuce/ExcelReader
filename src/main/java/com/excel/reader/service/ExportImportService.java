@@ -42,4 +42,8 @@ public class ExportImportService {
         System.out.println("lastRowNumber:" + result);
         return result;
     }
+
+    public void saveAll(List<ExportImport> batchRecords) {
+
+    }
 }
