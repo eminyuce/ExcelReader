@@ -50,7 +50,7 @@ The project uses the following dependency for reading large Excel files efficien
 
 ## Usage
 1. Place Excel files in the designated directory.
-2. Run the application.
+2. Run the application ( java -Xms2g -Xmx2g -jar ExcelHelper-0.0.1-SNAPSHOT.jar "[DIRECTORY_PATH]" )
 3. Processed records will be inserted into the database in batches.
 
 ## Contribution
