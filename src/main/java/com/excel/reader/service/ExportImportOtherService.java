@@ -1,14 +1,11 @@
 package com.excel.reader.service;
 
-import com.excel.reader.entities.ExportImportAralik;
 import com.excel.reader.entities.ExportImportOther;
 import com.excel.reader.entities.dto.ExportImportOtherDTO;
+import com.excel.reader.entities.dto.ReportTotalProcessedDTO;
 import com.excel.reader.repo.ExportImportOtherRespository;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.ParameterMode;
 import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.StoredProcedureQuery;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +15,7 @@ import com.microsoft.sqlserver.jdbc.SQLServerPreparedStatement;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -29,7 +27,6 @@ import java.util.stream.Collectors;
 @Component
 public class ExportImportOtherService {
     private static final Logger logger = LoggerFactory.getLogger(ExportImportOtherService.class);
-
     @PersistenceContext
     private EntityManager entityManager;
 
@@ -188,4 +185,35 @@ public class ExportImportOtherService {
                 .istatistikiKiymetUsdDegeri(entity.getIstatistikiKiymetUsdDegeri())
                 .build();
     }
+
+    @Transactional(readOnly = true)
+    public int findLastRowNumber(String fileName, String sheetName) {
+        String trimmedFileName = fileName != null ? fileName.trim() : null;
+        String trimmedSheetName = sheetName != null ? sheetName.trim() : null;
+        logger.debug("Executing query with fileName: '{}', sheetName: '{}'", trimmedFileName, trimmedSheetName);
+        Integer lastRowNumber = exportImportOtherRespository.findLastRowNumber(trimmedFileName, trimmedSheetName);
+        int result = lastRowNumber == null ? 0 : lastRowNumber;
+        logger.debug("Query result: {}", result);
+        System.out.println("lastRowNumber:"+lastRowNumber);
+        return result;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ReportTotalProcessedDTO> getReportTotalProcessed() {
+        var query = entityManager.createStoredProcedureQuery("dbo.ReportTotalProceesed");
+
+        query.execute();
+
+        List<Object[]> results = query.getResultList();
+
+        return results.stream().map(row -> new ReportTotalProcessedDTO(
+                (String) row[0],
+                ((Number) row[1]).intValue(),  // Safer casting
+                (String) row[2],
+                (String) row[3],
+                ((Number) row[4]).intValue()   // Safer casting
+        )).collect(Collectors.toList());
+    }
+
+
 }

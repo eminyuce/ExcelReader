@@ -37,7 +37,7 @@ public class ExportImportService {
     }
 
     public int findLastRowNumber(String fileName, String sheetName) {
-        Integer lastRowNumber = 0; //exportImportRepository.findLastRowNumber(fileName, sheetName);
+        Integer lastRowNumber = exportImportRepository.findLastRowNumber(fileName, sheetName);
         var result = lastRowNumber == null ? 0 : lastRowNumber;
         System.out.println("lastRowNumber:" + result);
         return result;
@@ -46,4 +46,5 @@ public class ExportImportService {
     public void saveAll(List<ExportImport> batchRecords) {
 
     }
+
 }

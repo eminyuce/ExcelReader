@@ -21,4 +21,10 @@ public class ExportImportAralikService {
     public void saveAll(List<ExportImportAralik> aralikBatch) {
         exportImportAralikRepository.saveAll(aralikBatch);
     }
+    public int findLastRowNumber(String fileName, String sheetName) {
+        Integer lastRowNumber = exportImportAralikRepository.findLastRowNumber(fileName,sheetName);
+        var result = lastRowNumber == null ? 0 : lastRowNumber;
+        System.out.println("lastRowNumber:" + result);
+        return result;
+    }
 }

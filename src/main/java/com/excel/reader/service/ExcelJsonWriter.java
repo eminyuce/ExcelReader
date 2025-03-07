@@ -3,6 +3,7 @@ package com.excel.reader.service;
 import com.excel.reader.entities.ExportImport;
 import com.excel.reader.entities.ExportImportAralik;
 import com.excel.reader.entities.ExportImportOther;
+import com.excel.reader.entities.dto.ReportTotalProcessedDTO;
 import com.excel.reader.util.ExcelHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -61,19 +62,34 @@ public class ExcelJsonWriter {
             logger.warn("The directory is empty: {}", pathname);
             return;
         }
-
+        List<ReportTotalProcessedDTO> reportTotalProcessedDTOS = exportImportOtherService.getReportTotalProcessed();
         for (File file : files) {
             if (file.isFile()) {
                 String fullPath = file.getAbsolutePath();
                 logger.info("****************** START FILE *********************************");
                 logger.info("Processing FileName: {}", fullPath);
-                readExcelFileAndSaveItsDataAsJson(fullPath);
+                // Find matching ReportTotalProcessedDTO or use a default if not found
+                String fileName = replaceTurkishChars(file.getName());
+                Optional<ReportTotalProcessedDTO> matchingReport = reportTotalProcessedDTOS.stream()
+                        .filter(r -> fileName.toLowerCase().equals(replaceTurkishChars(r.getFileName()).toLowerCase()))
+                        .findFirst();
+
+                ReportTotalProcessedDTO report = matchingReport.orElse(null); // or provide a default DTO
+                if (report == null) {
+                    logger.warn("No matching report found for file: {}", fileName);
+                } else {
+                    logger.info("Found report for file: {} - Total: {}, MaxRowInt: {}",
+                            fileName, report.getTotal(), report.getMaxRowInt());
+                }
+
+                // Call the method with the report (null-safe handling depends on the method)
+                readExcelFileAndSaveItsDataAsJson(fullPath, report);
                 logger.info("******************** END FILE *******************************");
             }
         }
     }
 
-    private void readExcelFileAndSaveItsDataAsJson(String filePath) {
+    private void readExcelFileAndSaveItsDataAsJson(String filePath,ReportTotalProcessedDTO report) {
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) {
             logger.error("The file does not exist or is not a valid file: {}", filePath);
@@ -95,7 +111,7 @@ public class ExcelJsonWriter {
 
             for (Sheet sheet : workbook) {
                 logger.info("Reading Sheet: {}", sheet.getSheetName());
-                int lastRowNumber = exportImportService.findLastRowNumber(normalizedFileName, sheet.getSheetName());
+                int lastRowNumber = findLastRowNumber(report);
                 boolean isFirstRow = true;
                 List<String> headers = new ArrayList<>();
 
@@ -198,6 +214,10 @@ public class ExcelJsonWriter {
         }
     }
 
+    private int findLastRowNumber(ReportTotalProcessedDTO report) {
+        return report.getMaxRowInt();
+    }
+
     private void readExcelFileHeaderAndThreeRowToSeeData(String filePath) {
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) {
@@ -257,5 +277,15 @@ public class ExcelJsonWriter {
             throw new RuntimeException("Error reading Excel file: " + e.getMessage(), e);
         }
     }
+    public static String replaceTurkishChars(String input) {
+        if (input == null) return null;
+        return input.replace("İ", "I").replace("ı", "i")
+                .replace("Ğ", "G").replace("ğ", "g")
+                .replace("Ş", "S").replace("ş", "s")
+                .replace("Ç", "C").replace("ç", "c")
+                .replace("Ö", "O").replace("ö", "o")
+                .replace("Ü", "U").replace("ü", "u");
+    }
+
 
 }
