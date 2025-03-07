@@ -55,8 +55,3 @@ The project uses the following dependency for reading large Excel files efficien
 
 ## Contribution
 Feel free to fork and contribute by submitting pull requests.
-
-## License
-This project is licensed under the MIT License.
-
-
