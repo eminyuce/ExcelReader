@@ -11,7 +11,7 @@ public class DemoApplication {
     public static void main(String[] args) {
         ApplicationContext context = SpringApplication.run(DemoApplication.class);
         ExcelJsonWriter service = context.getBean(ExcelJsonWriter.class);
-        service.processDirector("C:\\Logistic\\2023 İHR");
+        service.processDirector(args[0]);
     }
 
 
