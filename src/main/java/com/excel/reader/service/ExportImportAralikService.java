@@ -1,21 +1,12 @@
 package com.excel.reader.service;
 
 import com.excel.reader.entities.ExportImportAralik;
-import com.excel.reader.entities.ExportImportOther;
 import com.excel.reader.entities.dto.ExportImportAralikDTO;
-import com.excel.reader.entities.dto.ExportImportOtherDTO;
-import com.excel.reader.entities.dto.ReportTotalProcessedDTO;
 import com.excel.reader.repo.ExportImportAralikRepository;
-import com.excel.reader.repo.ExportImportOtherRespository;
 import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
 import com.microsoft.sqlserver.jdbc.SQLServerPreparedStatement;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +29,7 @@ public class ExportImportAralikService {
     }
 
     public void saveAll(List<ExportImportAralik> aralikBatch) {
-       // exportImportAralikRepository.saveAll(aralikBatch);
+        // exportImportAralikRepository.saveAll(aralikBatch);
         this.batchInsert(aralikBatch);
     }
 
@@ -152,6 +143,7 @@ public class ExportImportAralikService {
 
             // Execute the stored procedure using the unwrapped connection
             String sql = "{call usp_BatchInsertExportImportAralik(?)}";
+            System.out.println("Execute usp_BatchInsertExportImportAralik:");
             try (SQLServerPreparedStatement stmt = (SQLServerPreparedStatement) sqlServerConnection.prepareStatement(sql)) {
                 stmt.setStructured(1, "dbo.ExportImportAralikType", dataTable);
                 stmt.execute();

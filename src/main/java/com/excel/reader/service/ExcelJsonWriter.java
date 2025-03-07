@@ -28,7 +28,7 @@ public class ExcelJsonWriter {
 
     private static final Logger logger = LoggerFactory.getLogger(ExcelJsonWriter.class);
     // Batch size - adjust this value based on your needs
-    final int BATCH_SIZE = 100000;
+    final int BATCH_SIZE = 1000;
 
     @Autowired
     private ExportImportAralikService exportImportAralikService;

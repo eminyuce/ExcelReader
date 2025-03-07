@@ -2,7 +2,6 @@ package com.excel.reader.entities.dto;
 
 import com.excel.reader.entities.ExportImportAralik;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import jakarta.persistence.Column;
 import lombok.*;
 
 import java.io.Serializable;
