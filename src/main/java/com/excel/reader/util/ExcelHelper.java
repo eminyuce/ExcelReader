@@ -11,6 +11,7 @@ public class ExcelHelper {
         Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
         return ExcelHelper.getCellValue(cell);
     }
+
     public static String removeDuplicateSpaces(String input) {
         if (input == null || input.isEmpty()) {
             return input;
@@ -21,6 +22,7 @@ public class ExcelHelper {
 
         return result;
     }
+
     public static String getCellValue(Cell cell) {
         if (cell == null) return "";
 

@@ -1,7 +1,9 @@
 package com.excel.reader.entities.dto;
 
+import com.excel.reader.entities.ExportImportOther;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.*;
+
 import java.io.Serializable;
 
 @Getter
@@ -103,4 +105,40 @@ public class ExportImportOtherDTO implements Serializable {
 
     @JsonProperty("İstatistiki Kıymet USD Değeri")
     private String istatistikiKiymetUsdDegeri;
+
+    public static ExportImportOtherDTO convertToDTO(ExportImportOther entity) {
+        return ExportImportOtherDTO.builder()
+                .rowInt(entity.getRowInt())
+                .fileName(entity.getFileName())
+                .sheetName(entity.getSheetName())
+                .tcgbGumrukIdaresiKodu(entity.getTcgbGumrukIdaresiKodu())
+                .tcgbGumrukIdaresiAdi(entity.getTcgbGumrukIdaresiAdi())
+                .tcgbTescilNo(entity.getTcgbTescilNo())
+                .tcgbTescilTarihi(entity.getTcgbTescilTarihi())
+                .tcgbKapanisTarihi(entity.getTcgbKapanisTarihi())
+                .gondericiAliciVergiNo(entity.getGondericiAliciVergiNo())
+                .gondericiAliciAdi(entity.getGondericiAliciAdi())
+                .aliciAdi(entity.getAliciAdi())
+                .gidecegiUlkeKodu(entity.getGidecegiUlkeKodu())
+                .gidecegiUlkeAdi(entity.getGidecegiUlkeAdi())
+                .menseUlkeKodu(entity.getMenseUlkeKodu())
+                .menseUlkeAdi(entity.getMenseUlkeAdi())
+                .teslimSekliKodu(entity.getTeslimSekliKodu())
+                .kalemSiraNo(entity.getKalemSiraNo())
+                .kalemRejimKodu(entity.getKalemRejimKodu())
+                .kalemRejimAciklamasi(entity.getKalemRejimAciklamasi())
+                .kalemRejimAciklmasi(entity.getKalemRejimAciklmasi())
+                .gtipKodu(entity.getGtipKodu())
+                .gtipAciklamasi(entity.getGtipAciklamasi())
+                .ticariTanimi(entity.getTicariTanimi())
+                .tcgbStatuAciklamasi(entity.getTcgbStatuAciklamasi())
+                .faturaTutari(entity.getFaturaTutari())
+                .faturaTutariDovizTuruKodu(entity.getFaturaTutariDovizTuruKodu())
+                .olcuEsyaMiktari(entity.getOlcuEsyaMiktari())
+                .olcuBirimiAciklamasi(entity.getOlcuBirimiAciklamasi())
+                .netAgirlikKg(entity.getNetAgirlikKg())
+                .hesaplanmisKalemKiymetiUsdDegeri(entity.getHesaplanmisKalemKiymetiUsdDegeri())
+                .istatistikiKiymetUsdDegeri(entity.getIstatistikiKiymetUsdDegeri())
+                .build();
+    }
 }

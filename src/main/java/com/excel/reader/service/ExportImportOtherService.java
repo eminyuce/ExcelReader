@@ -4,23 +4,20 @@ import com.excel.reader.entities.ExportImportOther;
 import com.excel.reader.entities.dto.ExportImportOtherDTO;
 import com.excel.reader.entities.dto.ReportTotalProcessedDTO;
 import com.excel.reader.repo.ExportImportOtherRespository;
+import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
+import com.microsoft.sqlserver.jdbc.SQLServerPreparedStatement;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
-import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
-import com.microsoft.sqlserver.jdbc.SQLServerPreparedStatement;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.DataSourceUtils;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.Types;
-import java.util.List;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -29,27 +26,24 @@ public class ExportImportOtherService {
     private static final Logger logger = LoggerFactory.getLogger(ExportImportOtherService.class);
     @PersistenceContext
     private EntityManager entityManager;
-
+    @Autowired
+    private DataSource dataSource;
 
     @Autowired
-    private  ExportImportOtherRespository exportImportOtherRespository;
+    private ExportImportOtherRespository exportImportOtherRespository;
 
     public void save(ExportImportOther item) {
         exportImportOtherRespository.save(item);
     }
 
     public void saveAll(List<ExportImportOther> otherBatch) {
-        //exportImportOtherRespository.saveAll(otherBatch);
         this.batchInsert(otherBatch);
     }
-
-    @Autowired
-    private DataSource dataSource;
 
     @Transactional
     public int batchInsert(List<ExportImportOther> entities) {
         List<ExportImportOtherDTO> dtos = entities.stream()
-                .map(this::convertToDTO)
+                .map(r -> ExportImportOtherDTO.convertToDTO(r))
                 .collect(Collectors.toList());
 
         try (Connection connection = DataSourceUtils.getConnection(dataSource)) {
@@ -139,7 +133,9 @@ public class ExportImportOtherService {
                 if (stmt.getMoreResults()) {
                     try (var rs = stmt.getResultSet()) {
                         if (rs.next()) {
-                            return rs.getInt(1);
+                            var resultSetRow = rs.getInt(1);
+                            System.out.println("the affected rows from the result set:" + resultSetRow);
+                            return resultSetRow;
                         }
                     }
                 }
@@ -150,42 +146,7 @@ public class ExportImportOtherService {
         }
     }
 
-    private ExportImportOtherDTO convertToDTO(ExportImportOther entity) {
-        return ExportImportOtherDTO.builder()
-                .rowInt(entity.getRowInt())
-                .fileName(entity.getFileName())
-                .sheetName(entity.getSheetName())
-                .tcgbGumrukIdaresiKodu(entity.getTcgbGumrukIdaresiKodu())
-                .tcgbGumrukIdaresiAdi(entity.getTcgbGumrukIdaresiAdi())
-                .tcgbTescilNo(entity.getTcgbTescilNo())
-                .tcgbTescilTarihi(entity.getTcgbTescilTarihi())
-                .tcgbKapanisTarihi(entity.getTcgbKapanisTarihi())
-                .gondericiAliciVergiNo(entity.getGondericiAliciVergiNo())
-                .gondericiAliciAdi(entity.getGondericiAliciAdi())
-                .aliciAdi(entity.getAliciAdi())
-                .gidecegiUlkeKodu(entity.getGidecegiUlkeKodu())
-                .gidecegiUlkeAdi(entity.getGidecegiUlkeAdi())
-                .menseUlkeKodu(entity.getMenseUlkeKodu())
-                .menseUlkeAdi(entity.getMenseUlkeAdi())
-                .teslimSekliKodu(entity.getTeslimSekliKodu())
-                .kalemSiraNo(entity.getKalemSiraNo())
-                .kalemRejimKodu(entity.getKalemRejimKodu())
-                .kalemRejimAciklamasi(entity.getKalemRejimAciklamasi())
-                .kalemRejimAciklmasi(entity.getKalemRejimAciklmasi())
-                .gtipKodu(entity.getGtipKodu())
-                .gtipAciklamasi(entity.getGtipAciklamasi())
-                .ticariTanimi(entity.getTicariTanimi())
-                .tcgbStatuAciklamasi(entity.getTcgbStatuAciklamasi())
-                .faturaTutari(entity.getFaturaTutari())
-                .faturaTutariDovizTuruKodu(entity.getFaturaTutariDovizTuruKodu())
-                .olcuEsyaMiktari(entity.getOlcuEsyaMiktari())
-                .olcuBirimiAciklamasi(entity.getOlcuBirimiAciklamasi())
-                .netAgirlikKg(entity.getNetAgirlikKg())
-                .hesaplanmisKalemKiymetiUsdDegeri(entity.getHesaplanmisKalemKiymetiUsdDegeri())
-                .istatistikiKiymetUsdDegeri(entity.getIstatistikiKiymetUsdDegeri())
-                .build();
-    }
-
+    // It did not work out because its file name in DB does not have Turkish chars, file name in file system has Turkish Chars
     @Transactional(readOnly = true)
     public int findLastRowNumber(String fileName, String sheetName) {
         String trimmedFileName = fileName != null ? fileName.trim() : null;
@@ -194,7 +155,7 @@ public class ExportImportOtherService {
         Integer lastRowNumber = exportImportOtherRespository.findLastRowNumber(trimmedFileName, trimmedSheetName);
         int result = lastRowNumber == null ? 0 : lastRowNumber;
         logger.debug("Query result: {}", result);
-        System.out.println("lastRowNumber:"+lastRowNumber);
+        System.out.println("lastRowNumber:" + lastRowNumber);
         return result;
     }
 

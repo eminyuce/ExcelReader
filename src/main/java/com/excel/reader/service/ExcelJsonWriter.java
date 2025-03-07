@@ -1,6 +1,5 @@
 package com.excel.reader.service;
 
-import com.excel.reader.entities.ExportImport;
 import com.excel.reader.entities.ExportImportAralik;
 import com.excel.reader.entities.ExportImportOther;
 import com.excel.reader.entities.dto.ReportTotalProcessedDTO;
@@ -29,10 +28,7 @@ public class ExcelJsonWriter {
 
     private static final Logger logger = LoggerFactory.getLogger(ExcelJsonWriter.class);
     // Batch size - adjust this value based on your needs
-    final int BATCH_SIZE = 500;
-
-    @Autowired
-    private ExportImportService exportImportService;
+    final int BATCH_SIZE = 100000;
 
     @Autowired
     private ExportImportAralikService exportImportAralikService;
@@ -53,11 +49,11 @@ public class ExcelJsonWriter {
 
         // List all files in the directory
         File[] files = directory.listFiles();
-//        if (files != null) {
-//            List<File> fileList = Arrays.asList(files);
-//            Collections.reverse(fileList);
-//            files = fileList.toArray(new File[0]); // Convert back to array if needed
-//        }
+        if (files != null) {
+            List<File> fileList = Arrays.asList(files);
+            Collections.reverse(fileList);
+            files = fileList.toArray(new File[0]); // Convert back to array if needed
+        }
         if (files == null || files.length == 0) {
             logger.warn("The directory is empty: {}", pathname);
             return;
@@ -89,7 +85,7 @@ public class ExcelJsonWriter {
         }
     }
 
-    private void readExcelFileAndSaveItsDataAsJson(String filePath,ReportTotalProcessedDTO report) {
+    private void readExcelFileAndSaveItsDataAsJson(String filePath, ReportTotalProcessedDTO report) {
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) {
             logger.error("The file does not exist or is not a valid file: {}", filePath);
@@ -142,7 +138,7 @@ public class ExcelJsonWriter {
                         String rowJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rowData);
 
                         // Process based on file name
-                        if(normalizedFileName.contains("Aralık")) {
+                        if (normalizedFileName.contains("Aralık")) {
                             try {
                                 logger.debug("ExportImportAralik.rowJson:" + rowJson);
                                 var item = objectMapper.readValue(rowJson, ExportImportAralik.class);
@@ -215,68 +211,11 @@ public class ExcelJsonWriter {
     }
 
     private int findLastRowNumber(ReportTotalProcessedDTO report) {
+        if (report == null)
+            return 0;
         return report.getMaxRowInt();
     }
 
-    private void readExcelFileHeaderAndThreeRowToSeeData(String filePath) {
-        File file = new File(filePath);
-        if (!file.exists() || !file.isFile()) {
-            logger.error("The file does not exist or is not a valid file: {}", filePath);
-            return;
-        }
-
-        logger.info("The file exists: {}", filePath);
-
-        try (FileInputStream is = new FileInputStream(filePath);
-             Workbook workbook = StreamingReader.builder()
-                     .rowCacheSize(3)
-                     .bufferSize(4096)
-                     .open(is)) {
-
-            for (Sheet sheet : workbook) {
-                logger.info("Reading Sheet: {}", sheet.getSheetName());
-
-                boolean isFirstRow = true;
-                List<String> headers = new ArrayList<>();
-                int rowCount = 0;
-
-                for (Row row : sheet) {
-                    if (isFirstRow) {
-                        isFirstRow = false;
-                        for (Cell cell : row) {
-                            headers.add(getCellValue(cell));
-                        }
-                        Map<String, Object> headerData = new LinkedHashMap<>();
-                        headerData.put("sheetName", sheet.getSheetName());
-                        headerData.put("headers", headers);
-                        String headerJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(headerData);
-                        logger.info("Header JSON:\n{}", headerJson);
-                        continue;
-                    }
-
-                    if (rowCount < 3) {
-                        Map<String, Object> rowData = new LinkedHashMap<>();
-                        int cellIndex = 0;
-                        for (Cell cell : row) {
-                            if (cellIndex < headers.size()) {
-                                rowData.put(headers.get(cellIndex), getCellValue(cell));
-                            }
-                            cellIndex++;
-                        }
-                        rowData.put("rowNumber", rowCount + 1);
-                        String rowJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rowData);
-                        logger.info("Row {} JSON:\n{}", rowCount + 1, rowJson);
-                        rowCount++;
-                    } else {
-                        break;
-                    }
-                }
-            }
-        } catch (IOException e) {
-            logger.error("Error reading Excel file for preview: {}", filePath, e);
-            throw new RuntimeException("Error reading Excel file: " + e.getMessage(), e);
-        }
-    }
     public static String replaceTurkishChars(String input) {
         if (input == null) return null;
         return input.replace("İ", "I").replace("ı", "i")
