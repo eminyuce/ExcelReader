@@ -184,13 +184,13 @@ public class ExcelJsonWriter {
                                 // Check if batch size reached
                                 if (importOtherBatch.size() >= BATCH_SIZE) {
                                     importOtherService.saveAll(importOtherBatch);
-                                    log.info("Saved batch of {} Aralik records", importOtherBatch.size());
+                                    log.info("Saved batch of {} importOtherBatch records", importOtherBatch.size());
                                     importOtherBatch.clear();
                                 }
                             } catch (JsonProcessingException e) {
                                 log.error("ExportImportAralik Exception:", e);
                             }
-                        } else if (normalizedFileName.contains("Aralık")) {
+                        } else if (normalizedFileName.toUpperCase().contains("Aralık".toUpperCase())) {
                             try {
                                 log.debug("ExportImportAralik.rowJson:" + rowJson);
                                 var item = objectMapper.readValue(rowJson, ExportImportAralik.class);
