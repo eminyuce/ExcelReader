@@ -10,6 +10,8 @@ This project processes Excel files from a specified directory, extracts data fro
 - Saves data to the database in batches.
 - Uses a stored procedure for efficient bulk insertion.
 - Batch size is set to **100,000** rows per database call.
+- Provides a **controller layer** for exporting data as an Excel file, allowing filtering and paging.
+- Implements **Spring Data Specifications** to handle filtering criteria and paging from the database.
 - Uses **Lombok** to reduce boilerplate code.
 - Utilizes **MSSQL Server** as the database.
 - Uses **Excel Streaming Reader** for efficient Excel file processing.
