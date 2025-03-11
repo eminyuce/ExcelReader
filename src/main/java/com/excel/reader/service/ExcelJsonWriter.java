@@ -44,6 +44,9 @@ public class ExcelJsonWriter {
         File directory = new File(pathname);
         if (StringUtils.isNotEmpty(batchSize)) {
             BATCH_SIZE = Integer.parseInt(batchSize);
+            if (BATCH_SIZE <= 0) {
+                throw new RuntimeException("Batch size cannot be less than 0");
+            }
             log.info("BATCH_SIZE is set: {}", batchSize);
         } else {
             log.info("DEFAULT BATCH_SIZE is used: {}", BATCH_SIZE);
