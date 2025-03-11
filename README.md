@@ -35,9 +35,9 @@ This project processes Excel files from a specified directory, extracts data fro
 - **Swagger UI** for API documentation and testing:
   ```xml
   <dependency>
-      <groupId>io.springfox</groupId>
-      <artifactId>springfox-boot-starter</artifactId>
-      <version>3.0.0</version>
+      <groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.6.0</version>
   </dependency>
   ```
 
@@ -107,8 +107,7 @@ This project processes Excel files from a specified directory, extracts data fro
    ```sh
    java -Xms2g -Xmx2g -jar ExcelHelper-0.0.1-SNAPSHOT.jar
    ```
-   - Default directory: `"./excel_files"`.
-   - Default batch size: **100,000 rows**.
+   - It will be working without processing excel files
 
 Processed data will be inserted into the database in batches.
 
@@ -130,8 +129,18 @@ Processed data will be inserted into the database in batches.
        "criteriaList": [
          {
            "field": "name",
-           "operator": "EQUALS",
+           "operator": "=",
            "value": "John"
+         },
+         {
+           "field": "last_name",
+           "operator": "like",
+           "value": "Brown"
+         },
+         {
+           "field": "birth_year",
+           "operator": ">",
+           "value": "2000"
          }
        ]
      }
