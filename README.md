@@ -3,6 +3,8 @@
 ## Overview
 This project processes Excel files from a specified directory, extracts data from each row along with headers, converts it into JSON format, maps it to corresponding entities, and saves the data into a database using batch processing. It also supports exporting filtered and paginated data from the database into an Excel file. Swagger UI is provided for easy testing of the REST API.
 
+## YOU NEED TO DEFINE YOUR JAVA ENTITY, SERVICE LAYER, AND REPOSITORY FOR BATCH INSERTION, ALONG WITH A STORED PROCEDURE TO HANDLE BULK SAVING EFFICIENTLY.
+
 ## Features
 - Reads Excel files from a configurable directory.
 - Extracts rows with headers and converts them into JSON format.
