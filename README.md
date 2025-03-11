@@ -1,7 +1,7 @@
 # Excel File Processor
 
 ## Overview
-This project processes Excel files from a specified directory, extracts data from each row along with the headers, converts it into JSON format, maps it to respective entities, and saves the data into a database using batch processing.
+This project processes Excel files from a specified directory, extracts data from each row along with the headers, converts it into JSON format, maps it to respective entities, and saves the data into a database using batch processing. Additionally, it allows exporting data from the database into an Excel file with support for filtering and paging based on dynamic criteria. Swagger UI is also provided to easily test the REST API.
 
 ## Features
 - Reads Excel files from a directory.
@@ -15,6 +15,8 @@ This project processes Excel files from a specified directory, extracts data fro
 - Uses **Lombok** to reduce boilerplate code.
 - Utilizes **MSSQL Server** as the database.
 - Uses **Excel Streaming Reader** for efficient Excel file processing.
+- **Swagger UI** is available to test the REST API at `http://localhost:8080/swagger-ui/index.html#/`.
+
 
 ## Dependencies
 The project uses the following dependency for reading large Excel files efficiently:
