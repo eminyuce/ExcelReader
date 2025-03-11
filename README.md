@@ -150,7 +150,7 @@ Processed data will be inserted into the database in batches.
      - `page`: Pagination details (`pageNum`, `pageSize`, `sortBy`, `sortDirection`).
      - `criteriaList`: List of filters (e.g., field, operator, value).
 
-   The response will be an Excel file containing the filtered and paginated data.
+   The response will be json data containing the filtered and paginated data.
 
 ### Swagger UI
 - Access Swagger UI at: [http://localhost:8080/swagger-ui/index.html#/](http://localhost:8080/swagger-ui/index.html#/).
@@ -158,10 +158,3 @@ Processed data will be inserted into the database in batches.
 
 ## Contribution
 Feel free to fork the repository and submit pull requests with improvements or bug fixes.
-
-
-
-This version should be ready to add to your GitHub repository! Let me know if you need further tweaks.
-```
-
-You can copy this markdown directly into your GitHub repository’s `README.md` file. Let me know if you need further adjustments.
