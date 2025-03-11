@@ -63,7 +63,7 @@ This project processes Excel files from a specified directory, extracts data fro
 - Allows interactive testing of API endpoints.
 
 ## Prerequisites
-- Java (JDK 11 or higher recommended)
+- Java (JDK 17)
 - MSSQL Server
 - Maven
 - Lombok
