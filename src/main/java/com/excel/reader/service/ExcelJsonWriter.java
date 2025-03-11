@@ -45,7 +45,7 @@ public class ExcelJsonWriter {
         if (StringUtils.isNotEmpty(batchSize)) {
             BATCH_SIZE = Integer.parseInt(batchSize);
             log.info("BATCH_SIZE is set: {}", batchSize);
-        }else{
+        } else {
             log.info("DEFAULT BATCH_SIZE is used: {}", BATCH_SIZE);
         }
         // Check if the directory exists and is a directory
