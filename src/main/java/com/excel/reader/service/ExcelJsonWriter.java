@@ -1,18 +1,20 @@
 package com.excel.reader.service;
 
+import com.excel.reader.annotation.TimedExecution;
 import com.excel.reader.entities.ExportImportAralik;
 import com.excel.reader.entities.ExportImportOther;
 import com.excel.reader.entities.dto.ReportTotalProcessedDTO;
 import com.excel.reader.util.ExcelHelper;
+import com.excel.reader.util.GeneralHelper;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.pjfanning.xlsx.StreamingReader;
+import io.micrometer.common.util.StringUtils;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
@@ -24,11 +26,11 @@ import java.util.*;
 import static com.excel.reader.util.ExcelHelper.getCellValue;
 
 @Component
+@Slf4j
 public class ExcelJsonWriter {
 
-    private static final Logger logger = LoggerFactory.getLogger(ExcelJsonWriter.class);
     // Batch size - adjust this value based on your needs
-    final int BATCH_SIZE = 100000;
+    static int BATCH_SIZE = 50000;
 
     @Autowired
     private ExportImportAralikService exportImportAralikService;
@@ -38,12 +40,17 @@ public class ExcelJsonWriter {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public void processDirector(String pathname) {
+    public void processDirector(String pathname, String batchSize) {
         File directory = new File(pathname);
-
+        if (StringUtils.isNotEmpty(batchSize)) {
+            BATCH_SIZE = Integer.parseInt(batchSize);
+            log.info("BATCH_SIZE is set: {}", batchSize);
+        }else{
+            log.info("DEFAULT BATCH_SIZE is used: {}", BATCH_SIZE);
+        }
         // Check if the directory exists and is a directory
         if (!directory.exists() || !directory.isDirectory()) {
-            logger.error("The specified path is not a valid directory: {}", pathname);
+            log.error("The specified path is not a valid directory: {}", pathname);
             return;
         }
 
@@ -55,44 +62,45 @@ public class ExcelJsonWriter {
             files = fileList.toArray(new File[0]); // Convert back to array if needed
         }
         if (files == null || files.length == 0) {
-            logger.warn("The directory is empty: {}", pathname);
+            log.warn("The directory is empty: {}", pathname);
             return;
         }
         List<ReportTotalProcessedDTO> reportTotalProcessedDTOS = exportImportOtherService.getReportTotalProcessed();
         for (File file : files) {
             if (file.isFile()) {
                 String fullPath = file.getAbsolutePath();
-                logger.info("****************** START FILE *********************************");
-                logger.info("Processing FileName: {}", fullPath);
+                log.info("****************** START FILE *********************************");
+                log.info("Processing FileName: {}", fullPath);
                 // Find matching ReportTotalProcessedDTO or use a default if not found
-                String fileName = replaceTurkishChars(file.getName());
+                String fileName = GeneralHelper.replaceTurkishChars(file.getName());
                 Optional<ReportTotalProcessedDTO> matchingReport = reportTotalProcessedDTOS.stream()
-                        .filter(r -> fileName.toLowerCase().equals(replaceTurkishChars(r.getFileName()).toLowerCase()))
+                        .filter(r -> fileName.toLowerCase().equals(GeneralHelper.replaceTurkishChars(r.getFileName()).toLowerCase()))
                         .findFirst();
 
                 ReportTotalProcessedDTO report = matchingReport.orElse(null); // or provide a default DTO
                 if (report == null) {
-                    logger.warn("No matching report found for file: {}", fileName);
+                    log.warn("No matching report found for file: {}", fileName);
                 } else {
-                    logger.info("Found report for file: {} - Total: {}, MaxRowInt: {}",
+                    log.info("Found report for file: {} - Total: {}, MaxRowInt: {}",
                             fileName, report.getTotal(), report.getMaxRowInt());
                 }
 
                 // Call the method with the report (null-safe handling depends on the method)
                 readExcelFileAndSaveItsDataAsJson(fullPath, report);
-                logger.info("******************** END FILE *******************************");
+                log.info("******************** END FILE *******************************");
             }
         }
     }
 
+    @TimedExecution("readExcelFileAndSaveItsDataAsJson")
     private void readExcelFileAndSaveItsDataAsJson(String filePath, ReportTotalProcessedDTO report) {
         File file = new File(filePath);
         if (!file.exists() || !file.isFile()) {
-            logger.error("The file does not exist or is not a valid file: {}", filePath);
+            log.error("The file does not exist or is not a valid file: {}", filePath);
             return;
         }
 
-        logger.info("The file exists: {}", filePath);
+        log.info("The file exists: {}", filePath);
         String normalizedFileName = file.getName();
 
         // Batch lists for Aralik and Other entities
@@ -106,7 +114,7 @@ public class ExcelJsonWriter {
                      .open(is)) {
 
             for (Sheet sheet : workbook) {
-                logger.info("Reading Sheet: {}", sheet.getSheetName());
+                log.info("Reading Sheet: {}", sheet.getSheetName());
                 int lastRowNumber = findLastRowNumber(report);
                 boolean isFirstRow = true;
                 List<String> headers = new ArrayList<>();
@@ -135,12 +143,12 @@ public class ExcelJsonWriter {
                         }
 
                         // Convert row to JSON
-                        String rowJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(rowData);
+                        String rowJson = getRowJson(rowData);
 
                         // Process based on file name
                         if (normalizedFileName.contains("Aralık")) {
                             try {
-                                logger.debug("ExportImportAralik.rowJson:" + rowJson);
+                                log.debug("ExportImportAralik.rowJson:" + rowJson);
                                 var item = objectMapper.readValue(rowJson, ExportImportAralik.class);
                                 item.setFileName(normalizedFileName);
                                 item.setSheetName(sheet.getSheetName());
@@ -152,15 +160,15 @@ public class ExcelJsonWriter {
                                 // Check if batch size reached
                                 if (aralikBatch.size() >= BATCH_SIZE) {
                                     exportImportAralikService.saveAll(aralikBatch);
-                                    logger.info("Saved batch of {} Aralik records", aralikBatch.size());
+                                    log.info("Saved batch of {} Aralik records", aralikBatch.size());
                                     aralikBatch.clear();
                                 }
                             } catch (JsonProcessingException e) {
-                                logger.error("ExportImportAralik Exception:", e);
+                                log.error("ExportImportAralik Exception:", e);
                             }
                         } else {
                             try {
-                                logger.debug("ExportImportOther.rowJson:" + rowJson);
+                                log.debug("ExportImportOther.rowJson:" + rowJson);
                                 var item = objectMapper.readValue(rowJson, ExportImportOther.class);
                                 item.setFileName(normalizedFileName);
                                 item.setSheetName(sheet.getSheetName());
@@ -172,15 +180,15 @@ public class ExcelJsonWriter {
                                 // Check if batch size reached
                                 if (otherBatch.size() >= BATCH_SIZE) {
                                     exportImportOtherService.saveAll(otherBatch);
-                                    logger.info("Saved batch of {} Other records", otherBatch.size());
+                                    log.info("Saved batch of {} Other records", otherBatch.size());
                                     otherBatch.clear();
                                 }
                             } catch (JsonProcessingException e) {
-                                logger.error("ExportImportOther:", e);
+                                log.error("ExportImportOther:", e);
                             }
                         }
                     } catch (Exception e) {
-                        logger.error("Exception", e);
+                        log.error("Exception", e);
                     }
                 }
 
@@ -188,43 +196,35 @@ public class ExcelJsonWriter {
                 // Save remaining Aralik records
                 if (!aralikBatch.isEmpty()) {
                     exportImportAralikService.saveAll(aralikBatch);
-                    logger.info("Saved final batch of {} Aralik records", aralikBatch.size());
+                    log.info("Saved final batch of {} Aralik records", aralikBatch.size());
                     aralikBatch.clear();
                 }
 
                 // Save remaining Other records
                 if (!otherBatch.isEmpty()) {
                     exportImportOtherService.saveAll(otherBatch);
-                    logger.info("Saved final batch of {} Other records", otherBatch.size());
+                    log.info("Saved final batch of {} Other records", otherBatch.size());
                     otherBatch.clear();
                 }
 
                 break;
             }
         } catch (IOException e) {
-            logger.error("Error reading Excel file: {}", filePath, e);
+            log.error("Error reading Excel file: {}", filePath, e);
             throw new RuntimeException("Error reading Excel file: " + e.getMessage(), e);
         } catch (Exception e) {
-            logger.error("Unexpected error while processing Excel file: {}", filePath, e);
+            log.error("Unexpected error while processing Excel file: {}", filePath, e);
             throw new RuntimeException("Unexpected error: " + e.getMessage(), e);
         }
     }
 
+    @TimedExecution("GetRowJson")
+    private String getRowJson(Map<String, Object> rowData) throws JsonProcessingException {
+        return objectMapper.writeValueAsString(rowData);
+    }
+
     private int findLastRowNumber(ReportTotalProcessedDTO report) {
-        if (report == null)
-            return 0;
-        return report.getMaxRowInt();
+        return report == null ? 0 : report.getMaxRowInt();
     }
-
-    public static String replaceTurkishChars(String input) {
-        if (input == null) return null;
-        return input.replace("İ", "I").replace("ı", "i")
-                .replace("Ğ", "G").replace("ğ", "g")
-                .replace("Ş", "S").replace("ş", "s")
-                .replace("Ç", "C").replace("ç", "c")
-                .replace("Ö", "O").replace("ö", "o")
-                .replace("Ü", "U").replace("ü", "u");
-    }
-
 
 }

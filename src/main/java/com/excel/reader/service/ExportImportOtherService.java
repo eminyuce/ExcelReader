@@ -1,5 +1,6 @@
 package com.excel.reader.service;
 
+import com.excel.reader.annotation.TimedExecution;
 import com.excel.reader.entities.ExportImportOther;
 import com.excel.reader.entities.dto.ExportImportOtherDTO;
 import com.excel.reader.entities.dto.ReportTotalProcessedDTO;
@@ -8,8 +9,7 @@ import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
 import com.microsoft.sqlserver.jdbc.SQLServerPreparedStatement;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Component;
@@ -22,20 +22,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
+@Slf4j
 public class ExportImportOtherService {
-    private static final Logger logger = LoggerFactory.getLogger(ExportImportOtherService.class);
     @PersistenceContext
     private EntityManager entityManager;
     @Autowired
     private DataSource dataSource;
-
     @Autowired
     private ExportImportOtherRespository exportImportOtherRespository;
 
-    public void save(ExportImportOther item) {
-        exportImportOtherRespository.save(item);
-    }
 
+    @TimedExecution("StoredProcedureQuery.ExportImportOthersType.saveAll")
     public void saveAll(List<ExportImportOther> otherBatch) {
         this.batchInsert(otherBatch);
     }
@@ -151,14 +148,15 @@ public class ExportImportOtherService {
     public int findLastRowNumber(String fileName, String sheetName) {
         String trimmedFileName = fileName != null ? fileName.trim() : null;
         String trimmedSheetName = sheetName != null ? sheetName.trim() : null;
-        logger.debug("Executing query with fileName: '{}', sheetName: '{}'", trimmedFileName, trimmedSheetName);
+        log.debug("Executing query with fileName: '{}', sheetName: '{}'", trimmedFileName, trimmedSheetName);
         Integer lastRowNumber = exportImportOtherRespository.findLastRowNumber(trimmedFileName, trimmedSheetName);
         int result = lastRowNumber == null ? 0 : lastRowNumber;
-        logger.debug("Query result: {}", result);
+        log.debug("Query result: {}", result);
         System.out.println("lastRowNumber:" + lastRowNumber);
         return result;
     }
 
+    @TimedExecution("StoredProcedureQuery.ReportTotalProceesed")
     @Transactional(readOnly = true)
     public List<ReportTotalProcessedDTO> getReportTotalProcessed() {
         var query = entityManager.createStoredProcedureQuery("dbo.ReportTotalProceesed");

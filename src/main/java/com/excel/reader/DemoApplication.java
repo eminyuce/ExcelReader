@@ -11,7 +11,15 @@ public class DemoApplication {
     public static void main(String[] args) {
         ApplicationContext context = SpringApplication.run(DemoApplication.class);
         ExcelJsonWriter service = context.getBean(ExcelJsonWriter.class);
-        service.processDirector(args[0]);
+        // Check if second argument exists; if not, pass null or a default value
+        if (args.length == 1) {
+            service.processDirector(args[0], null);  // Passing null for the second argument
+        } else if (args.length > 1) {
+            service.processDirector(args[0], args[1]);
+        } else {
+            // Handle case when no arguments are passed (if needed)
+            System.out.println("No input files provided!");
+        }
     }
 
 

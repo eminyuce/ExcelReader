@@ -1,10 +1,12 @@
 package com.excel.reader.service;
 
+import com.excel.reader.annotation.TimedExecution;
 import com.excel.reader.entities.ExportImportAralik;
 import com.excel.reader.entities.dto.ExportImportAralikDTO;
 import com.excel.reader.repo.ExportImportAralikRepository;
 import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
 import com.microsoft.sqlserver.jdbc.SQLServerPreparedStatement;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.datasource.DataSourceUtils;
 import org.springframework.stereotype.Service;
@@ -17,6 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class ExportImportAralikService {
 
     @Autowired
@@ -24,12 +27,8 @@ public class ExportImportAralikService {
     @Autowired
     private DataSource dataSource;
 
-    public void save(ExportImportAralik item) {
-        exportImportAralikRepository.save(item);
-    }
-
+    @TimedExecution("StoredProcedureQuery.ExportImportAralik.saveAll")
     public void saveAll(List<ExportImportAralik> aralikBatch) {
-        // exportImportAralikRepository.saveAll(aralikBatch);
         this.batchInsert(aralikBatch);
     }
 

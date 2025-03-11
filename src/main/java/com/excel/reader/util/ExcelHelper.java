@@ -2,15 +2,8 @@ package com.excel.reader.util;
 
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DateUtil;
-import org.apache.poi.ss.usermodel.Row;
 
 public class ExcelHelper {
-
-    // Helper method to get string cell value
-    public static String getStringCellValue(Row row, int cellIndex) {
-        Cell cell = row.getCell(cellIndex, Row.MissingCellPolicy.CREATE_NULL_AS_BLANK);
-        return ExcelHelper.getCellValue(cell);
-    }
 
     public static String removeDuplicateSpaces(String input) {
         if (input == null || input.isEmpty()) {
@@ -24,6 +17,11 @@ public class ExcelHelper {
     }
 
     public static String getCellValue(Cell cell) {
+        var message = getCellValueString(cell);
+        return message.length() > 2550 ? message.substring(0, 2550) : message; // Trim if too long
+    }
+
+    public static String getCellValueString(Cell cell) {
         if (cell == null) return "";
 
         try {
@@ -48,8 +46,9 @@ public class ExcelHelper {
                 default -> cell.toString(); // Default case, ensuring no exception occurs
             };
         } catch (Exception e) {
-            return ""; // Fail-safe handling
+            return "Exception: " + e.getMessage();
         }
     }
+
 
 }
