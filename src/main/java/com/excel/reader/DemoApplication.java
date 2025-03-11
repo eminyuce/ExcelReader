@@ -8,7 +8,7 @@ import org.springframework.context.ApplicationContext;
 
 @SpringBootApplication
 public class DemoApplication {
-    // java -Xms2g -Xmx2g -jar ExcelHelper-0.0.1-SNAPSHOT.jar -f "C:\Logistic\2023_IHR" -s "5000"
+    // java -Xms2g -Xmx2g -jar ExcelHelper-0.0.1-SNAPSHOT.jar -Excel_Path_Directory "C:\Logistic\2023_IHR" -Batch_Size "5000"
     public static void main(String[] args) throws ParseException {
         // Start the Spring application context
         ApplicationContext context = SpringApplication.run(DemoApplication.class);
