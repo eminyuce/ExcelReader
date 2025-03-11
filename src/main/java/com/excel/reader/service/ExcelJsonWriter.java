@@ -3,6 +3,7 @@ package com.excel.reader.service;
 import com.excel.reader.annotation.TimedExecution;
 import com.excel.reader.entities.ExportImportAralik;
 import com.excel.reader.entities.ExportImportOther;
+import com.excel.reader.entities.ImportOther;
 import com.excel.reader.entities.dto.ReportTotalProcessedDTO;
 import com.excel.reader.util.ExcelHelper;
 import com.excel.reader.util.GeneralHelper;
@@ -32,6 +33,9 @@ public class ExcelJsonWriter {
 
     // Batch size - adjust this value based on your needs
     static int BATCH_SIZE = 50000;
+
+    @Autowired
+    private ImportOtherService importOtherService;
 
     @Autowired
     private ExportImportAralikService exportImportAralikService;
@@ -123,6 +127,7 @@ public class ExcelJsonWriter {
         String normalizedFileName = file.getName();
 
         // Batch lists for Aralik and Other entities
+        List<ImportOther> importOtherBatch = new ArrayList<>(BATCH_SIZE);
         List<ExportImportAralik> aralikBatch = new ArrayList<>(BATCH_SIZE);
         List<ExportImportOther> otherBatch = new ArrayList<>(BATCH_SIZE);
 
@@ -164,8 +169,28 @@ public class ExcelJsonWriter {
                         // Convert row to JSON
                         String rowJson = getRowJson(rowData);
 
-                        // Process based on file name
-                        if (normalizedFileName.contains("Aralık")) {
+                        // YOU SHOULD DEFINE YOUR JAVA ENTITY AND ITS SERVICE AND REPO LAYER FOR BATCH SAVING
+                        if (file.getAbsolutePath().toUpperCase().contains("IMPORT")) {
+                            try {
+                                log.debug("ImportOther.rowJson:" + rowJson);
+                                var item = objectMapper.readValue(rowJson, ImportOther.class);
+                                item.setFileName(normalizedFileName);
+                                item.setSheetName(sheet.getSheetName());
+                                item.setRowInt(rowNumber);
+
+                                // Add to batch list
+                                importOtherBatch.add(item);
+
+                                // Check if batch size reached
+                                if (importOtherBatch.size() >= BATCH_SIZE) {
+                                    importOtherService.saveAll(importOtherBatch);
+                                    log.info("Saved batch of {} Aralik records", importOtherBatch.size());
+                                    importOtherBatch.clear();
+                                }
+                            } catch (JsonProcessingException e) {
+                                log.error("ExportImportAralik Exception:", e);
+                            }
+                        } else if (normalizedFileName.contains("Aralık")) {
                             try {
                                 log.debug("ExportImportAralik.rowJson:" + rowJson);
                                 var item = objectMapper.readValue(rowJson, ExportImportAralik.class);

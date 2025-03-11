@@ -5,12 +5,12 @@ import com.excel.reader.entities.dto.ReportTotalProcessedDTO;
 import com.excel.reader.model.ExportImportOtherSearchParams;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.util.List;
 
-@Component
+@Service
 public interface ExportImportOtherService {
 
     List<ReportTotalProcessedDTO> getReportTotalProcessed();
