@@ -36,8 +36,8 @@ This project processes Excel files from a specified directory, extracts data fro
   ```xml
   <dependency>
       <groupId>org.springdoc</groupId>
-			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-			<version>2.6.0</version>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>2.6.0</version>
   </dependency>
   ```
 
