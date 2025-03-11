@@ -40,7 +40,7 @@ public class ExcelJsonWriter {
 
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    public void processDirector(String pathname, String batchSize) {
+    public void processExcelFilesFromDirectoryPath(String pathname, String batchSize) {
         File directory = new File(pathname);
         if (StringUtils.isNotEmpty(batchSize)) {
             BATCH_SIZE = Integer.parseInt(batchSize);

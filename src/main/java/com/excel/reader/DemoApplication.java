@@ -37,7 +37,7 @@ public class DemoApplication {
 
         if (excelPathDirectory != null) {
             // Call the service method with the arguments
-            service.processDirector(excelPathDirectory, batchSize);
+            service.processExcelFilesFromDirectoryPath(excelPathDirectory, batchSize);
         } else {
             System.out.println("App is running as web app");
         }
