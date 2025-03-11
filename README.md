@@ -15,6 +15,7 @@ This project processes Excel files from a specified directory, extracts data fro
 - Integrates with **MSSQL Server** as the database.
 - Employs **Excel Streaming Reader** for efficient processing of large Excel files.
 - Includes **Swagger UI** for API testing at `http://localhost:8080/swagger-ui/index.html#/`.
+- Utilize **Aspect-Oriented Programming (AOP)** to measure method execution times for performance metrics, particularly stored procedure execution times, to determine the optimal batch size.
 
 ## Dependencies
 - **Excel Streaming Reader** for efficient Excel file processing:
