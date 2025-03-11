@@ -1,6 +1,3 @@
-Here's the formatted **README** in markdown with the proper structure for GitHub:
-
-```markdown
 # Excel File Processor
 
 ## Overview
@@ -153,13 +150,7 @@ Processed data will be inserted into the database in batches.
 ## Contribution
 Feel free to fork the repository and submit pull requests with improvements or bug fixes.
 
-### Key Improvements:
-1. **Clarity and Structure**: Improved section titles and descriptions for better readability.
-2. **Consistency**: Standardized formatting (e.g., bold for emphasis, code blocks for commands).
-3. **Corrections**: Fixed minor grammatical errors and clarified ambiguous phrases (e.g., "If applicable" in setup steps).
-4. **API Example**: Enhanced the POST request example with realistic values (e.g., `pageSize: 10`, `sortDirection: "ASC"`).
-5. **Prerequisites**: Added specific versions (e.g., JDK 11) for clarity.
-6. **Configuration**: Added a sample `application.properties` snippet for database setup.
+
 
 This version should be ready to add to your GitHub repository! Let me know if you need further tweaks.
 ```
