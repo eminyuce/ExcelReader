@@ -18,16 +18,6 @@ This project processes Excel files from a specified directory, extracts data fro
 - **Swagger UI** is available to test the REST API at `http://localhost:8080/swagger-ui/index.html#/`.
 
 
-## Dependencies
-The project uses the following dependency for reading large Excel files efficiently:
-```xml
-<dependency>
-    <groupId>com.github.pjfanning</groupId>
-    <artifactId>excel-streaming-reader</artifactId>
-    <version>3.2.0</version>
-</dependency>
-```
-
 ## Workflow
 1. Read Excel files from the target directory.
 2. Parse each row along with its header and transform it into JSON format.
