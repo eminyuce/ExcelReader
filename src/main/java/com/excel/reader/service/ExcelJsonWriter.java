@@ -11,6 +11,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.pjfanning.xlsx.StreamingReader;
 import io.micrometer.common.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
@@ -72,25 +73,40 @@ public class ExcelJsonWriter {
         for (File file : files) {
             if (file.isFile()) {
                 String fullPath = file.getAbsolutePath();
-                log.info("****************** START FILE *********************************");
-                log.info("Processing FileName: {}", fullPath);
-                // Find matching ReportTotalProcessedDTO or use a default if not found
-                String fileName = GeneralHelper.replaceTurkishChars(file.getName());
-                Optional<ReportTotalProcessedDTO> matchingReport = reportTotalProcessedDTOS.stream()
-                        .filter(r -> fileName.toLowerCase().equals(GeneralHelper.replaceTurkishChars(r.getFileName()).toLowerCase()))
-                        .findFirst();
+                if (file.getName().startsWith("~$")) {
+                    log.error("Skipping temporary file: " + fullPath);
+                    return;
+                }
+                try {
+                    OPCPackage pkg = OPCPackage.open(file);
 
-                ReportTotalProcessedDTO report = matchingReport.orElse(null); // or provide a default DTO
-                if (report == null) {
-                    log.warn("No matching report found for file: {}", fileName);
-                } else {
-                    log.info("Found report for file: {} - Total: {}, MaxRowInt: {}",
-                            fileName, report.getTotal(), report.getMaxRowInt());
+
+                    log.info("****** START FILE ***********");
+                    log.info("Processing FileName: {}", fullPath);
+                    // Find matching ReportTotalProcessedDTO or use a default if not found
+                    String fileName = GeneralHelper.replaceTurkishChars(file.getName());
+                    Optional<ReportTotalProcessedDTO> matchingReport = reportTotalProcessedDTOS.stream()
+                            .filter(r -> fileName.toLowerCase().equals(GeneralHelper.replaceTurkishChars(r.getFileName()).toLowerCase()))
+                            .findFirst();
+
+                    ReportTotalProcessedDTO report = matchingReport.orElse(null); // or provide a default DTO
+                    if (report == null) {
+                        log.warn("No matching report found for file: {}", fileName);
+                    } else {
+                        log.info("Found report for file: {} - Total: {}, MaxRowInt: {}",
+                                fileName, report.getTotal(), report.getMaxRowInt());
+                    }
+
+                    // Call the method with the report (null-safe handling depends on the method)
+                    readExcelFileAndSaveItsDataAsJson(fullPath, report);
+                    log.info("******* END FILE ************");
+
+                    // Your processing logic here
+                } catch (Exception e) {
+                    log.error("Unexpected error while processing Excel file: " + fullPath);
+                    e.printStackTrace();
                 }
 
-                // Call the method with the report (null-safe handling depends on the method)
-                readExcelFileAndSaveItsDataAsJson(fullPath, report);
-                log.info("******************** END FILE *******************************");
             }
         }
     }
