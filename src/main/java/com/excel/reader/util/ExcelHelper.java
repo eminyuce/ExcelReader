@@ -42,7 +42,8 @@ public class ExcelHelper {
                         yield String.valueOf(cell.getNumericCellValue()); // Fallback to NUMERIC
                     }
                 }
-                case BLANK, ERROR -> "";
+                case BLANK, ERROR -> "BLANK/ERROR";
+                case _NONE -> "N/A";
                 default -> cell.toString(); // Default case, ensuring no exception occurs
             };
         } catch (Exception e) {

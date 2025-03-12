@@ -146,6 +146,7 @@ public class ExcelJsonWriter {
                 for (Row row : sheet) {
                     try {
                         int rowNumber = row.getRowNum() + 1;
+
                         if (isFirstRow) {
                             isFirstRow = false;
                             for (Cell cell : row) {
@@ -154,16 +155,21 @@ public class ExcelJsonWriter {
                             continue;
                         }
 
+                        if(rowNumber == 90759){
+
+                        }else{
+                            continue;
+                        }
+
+
                         if (row.getRowNum() <= lastRowNumber) continue;
 
                         // Process data row
                         Map<String, Object> rowData = new LinkedHashMap<>();
-                        int cellIndex = 0;
-                        for (Cell cell : row) {
-                            if (cellIndex < headers.size()) {
-                                rowData.put(headers.get(cellIndex), getCellValue(cell));
-                            }
-                            cellIndex++;
+                        // Iterate over all headers, not just the cells in the row
+                        for (int cellIndex = 0; cellIndex < headers.size(); cellIndex++) {
+                            Cell cell = row.getCell(cellIndex); // Get cell at index, may return null if missing
+                            rowData.put(headers.get(cellIndex), getCellValue(cell));
                         }
 
                         // Convert row to JSON
