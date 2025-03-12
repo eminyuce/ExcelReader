@@ -236,6 +236,11 @@ public class ExcelJsonWriter {
                     }
                 }
 
+                if (!importOtherBatch.isEmpty()) {
+                    importOtherService.saveAll(importOtherBatch);
+                    log.info("Saved final batch of {} importOtherBatch records", importOtherBatch.size());
+                    importOtherBatch.clear();
+                }
 
                 // Save remaining Aralik records
                 if (!aralikBatch.isEmpty()) {
