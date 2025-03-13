@@ -155,12 +155,6 @@ public class ExcelJsonWriter {
                             continue;
                         }
 
-                        if(rowNumber == 90759){
-
-                        }else{
-                            continue;
-                        }
-
 
                         if (row.getRowNum() <= lastRowNumber) continue;
 
