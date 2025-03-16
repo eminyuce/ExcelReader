@@ -79,7 +79,7 @@ public class ExcelJsonWriter {
                 String fullPath = file.getAbsolutePath();
                 if (file.getName().startsWith("~$")) {
                     log.error("Skipping temporary file: " + fullPath);
-                    return;
+                    continue;
                 }
                 try {
                     OPCPackage pkg = OPCPackage.open(file);
