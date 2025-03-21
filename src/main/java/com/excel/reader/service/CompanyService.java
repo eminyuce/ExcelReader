@@ -65,9 +65,10 @@ public class CompanyService {
     private List<Company> companiesBatch = new ArrayList<>();
     private int BATCH_COMPANY_SIZE = 5;
 
-    public void generateCompanyPlaceDataFromGooglePlaceAPI(int size) {
+    public void generateCompanyPlaceDataFromGooglePlaceAPI(int size, int batchSize) {
         int page = 0;
         boolean hasMoreData = true;
+        BATCH_COMPANY_SIZE=batchSize;
 
         while (hasMoreData) {
             Pageable pageable = PageRequest.of(page, size);

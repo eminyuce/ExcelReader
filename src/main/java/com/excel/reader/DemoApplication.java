@@ -16,7 +16,7 @@ public class DemoApplication {
     }
 
     private static void generateCompanyPlaceDataFromGooglePlaceAPI(String[] args, ApplicationContext context) {
-        context.getBean(CompanyService.class).generateCompanyPlaceDataFromGooglePlaceAPI(Integer.parseInt(args[0]));
+        context.getBean(CompanyService.class).generateCompanyPlaceDataFromGooglePlaceAPI(Integer.parseInt(args[0]),Integer.parseInt(args[1]));
     }
 
     private static void processExcelFilesFromDirectoryPath(String[] args, ApplicationContext context) {
