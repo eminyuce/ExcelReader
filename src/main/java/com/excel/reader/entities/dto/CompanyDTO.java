@@ -24,6 +24,7 @@ public class CompanyDTO {
     private Double rating;
     private Integer totalRatings;
     private String placeType;
+    private String companyType;
 
     public static CompanyDTO convertToDTO(Company company) {
         if (company == null) {
@@ -44,6 +45,7 @@ public class CompanyDTO {
                 .rating(company.getRating())
                 .totalRatings(company.getTotalRatings())
                 .placeType(company.getPlaceType())
+                .companyType(company.getCompanyType())
                 .build();
     }
 }

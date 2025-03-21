@@ -4,6 +4,7 @@ import com.excel.reader.entities.Company;
 import com.excel.reader.entities.dto.CompanyDTO;
 import com.excel.reader.model.CompanyLookup;
 import com.excel.reader.repo.CompanyRepository;
+import com.excel.reader.repo.ExportImportAralikRepository;
 import com.excel.reader.repo.ExportImportOtherRespository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -57,27 +58,44 @@ public class CompanyService {
     private ExportImportOtherRespository exportImportOtherRepository;
 
     @Autowired
+    private ExportImportAralikRepository exportImportAralikRepository;
+
+    @Autowired
     private CompanyLookupService companyLookupService;
     private List<Company> companiesBatch = new ArrayList<>();
-    private int BATCH_COMPANY_SIZE = 5000;
+    private int BATCH_COMPANY_SIZE = 5;
 
-    public void getAllCompanies(int size) {
+    public void generateCompanyPlaceDataFromGooglePlaceAPI(int size) {
         int page = 0;
         boolean hasMoreData = true;
 
-
         while (hasMoreData) {
             Pageable pageable = PageRequest.of(page, size);
-            Page<Tuple> companyPage = exportImportOtherRepository.findMinIdAndGroupedCompanies(pageable);
-            printCompanyInfo(companyPage);
+            Page<Tuple> companyPage = exportImportAralikRepository.findMinIdAndGroupedCompanies(pageable);
+            printCompanyInfo(companyPage,"aralik");
 
             // Check if there are more pages
             hasMoreData = companyPage.hasNext();
             page++;
         }
+
+        page = 0;
+        hasMoreData = true;
+
+
+        while (hasMoreData) {
+            Pageable pageable = PageRequest.of(page, size);
+            Page<Tuple> companyPage = exportImportOtherRepository.findMinIdAndGroupedCompanies(pageable);
+            printCompanyInfo(companyPage,"others");
+
+            // Check if there are more pages
+            hasMoreData = companyPage.hasNext();
+            page++;
+        }
+
     }
 
-    private void printCompanyInfo(Page<Tuple> companyPage) {
+    private void printCompanyInfo(Page<Tuple> companyPage, String companyType) {
         companyPage.forEach(tuple -> {
 
             Integer id = tuple.get("id", Integer.class);
@@ -91,12 +109,12 @@ public class CompanyService {
 
             // Process sender and receiver companies
             try {
-                processCompany(id, gonderiSirket);
+                processCompany(id, gonderiSirket,companyType);
             } catch (Exception e) {
                 log.error("processCompany Exception", e);
             }
             try {
-                processCompany(id, aliciSirket);
+                processCompany(id, aliciSirket,companyType);
             } catch (Exception e) {
                 log.error("processCompany Exception", e);
             }
@@ -107,7 +125,7 @@ public class CompanyService {
     /**
      * Process a company by checking the cache first, then fetching details if needed
      */
-    private void processCompany(Integer recordId, String companyName) {
+    private void processCompany(Integer recordId, String companyName, String companyType) {
         if (companyName == null || companyName.trim().isEmpty()) {
             log.warn("Skipping empty company name for record ID: {}", recordId);
             return;
@@ -131,7 +149,7 @@ public class CompanyService {
         } else {
             // First time seeing this company - try to fetch and save it
             try {
-                Company company = fetchAndSaveCompany(recordId, companyName);
+                Company company = fetchAndSaveCompany(recordId, companyName,companyType);
 
                 // Create a new lookup entry with successful processing
                 CompanyLookup newLookup = new CompanyLookup();
@@ -155,7 +173,7 @@ public class CompanyService {
     /**
      * Fetches company details from Google Maps API and saves to database
      */
-    private Company fetchAndSaveCompany(Integer recordId, String companyName) {
+    private Company fetchAndSaveCompany(Integer recordId, String companyName, String companyType) {
         try {
             // Step 1: First search for the place by name to get a place_id
             String placeId = findPlaceIdByName(companyName);
@@ -183,6 +201,7 @@ public class CompanyService {
             Company company = new Company();
             // Use a combination of record ID and place ID as the company ID
             company.setCompanyId(recordId);
+            company.setCompanyType(companyType);
             company.setName(companyName); // Store the original company name
             company.setPlaceId(placeId); // Store the Google place ID
             company.setAddress(result.path("formatted_address").asText("N/A"));
@@ -283,6 +302,7 @@ public class CompanyService {
             dataTable.addColumnMetadata("rating", Types.FLOAT);
             dataTable.addColumnMetadata("total_ratings", Types.INTEGER);
             dataTable.addColumnMetadata("website", Types.NVARCHAR);
+            dataTable.addColumnMetadata("company_type", Types.NVARCHAR);
 
             // Populate the data table with DTO data
             for (CompanyDTO dto : dtos) {
@@ -299,7 +319,8 @@ public class CompanyService {
                         dto.getPlaceType(),            // String (NVARCHAR)
                         dto.getRating(),               // Float (FLOAT)
                         dto.getTotalRatings(),         // Integer (INTEGER)
-                        dto.getWebsite()               // String (NVARCHAR)
+                        dto.getWebsite()   ,            // String (NVARCHAR)
+                        dto.getCompanyType()
                 );
             }
 

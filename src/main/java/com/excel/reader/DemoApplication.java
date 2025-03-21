@@ -11,9 +11,12 @@ public class DemoApplication {
     // java -Xms2g -Xmx2g -jar ExcelHelper-0.0.1-SNAPSHOT.jar "C:\Logistic\02 1 ŞUBAT 1.xlsx"
     public static void main(String[] args) {
         ApplicationContext context = SpringApplication.run(DemoApplication.class);
-        // processExcelFilesFromDirectoryPath(args, context);
-        CompanyService service = context.getBean(CompanyService.class);
-        service.getAllCompanies(Integer.parseInt(args[0]));
+        //processExcelFilesFromDirectoryPath(args, context);
+        generateCompanyPlaceDataFromGooglePlaceAPI(args, context);
+    }
+
+    private static void generateCompanyPlaceDataFromGooglePlaceAPI(String[] args, ApplicationContext context) {
+        context.getBean(CompanyService.class).generateCompanyPlaceDataFromGooglePlaceAPI(Integer.parseInt(args[0]));
     }
 
     private static void processExcelFilesFromDirectoryPath(String[] args, ApplicationContext context) {

@@ -29,4 +29,5 @@ public class Company {
     private Double rating;
     private Integer totalRatings;
     private String placeType;
+    private String companyType;
 }

@@ -2,6 +2,7 @@ package com.excel.reader.repo;
 
 import com.excel.reader.entities.ExportImportAralik;
 import jakarta.persistence.QueryHint;
+import jakarta.persistence.Tuple;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -30,4 +31,10 @@ public interface ExportImportAralikRepository extends JpaRepository<ExportImport
     @QueryHints({@QueryHint(name = "org.hibernate.fetchSize", value = "5000")})
     public List<ExportImportAralik> findAll(Specification<ExportImportAralik> spec);
 
+    @Query("SELECT min(e.id) AS id, e.gondericiAdiUnvani as gonderiSirket, e.aliciAdiUnvani as aliciSirket " +
+            "FROM ExportImportAralik e " +
+            "WHERE e.gondericiAdiUnvani <> '' AND e.aliciAdiUnvani <> '' " +
+            "GROUP BY e.gondericiAdiUnvani, e.aliciAdiUnvani " +
+            "ORDER BY min(e.id)")
+    Page<Tuple> findMinIdAndGroupedCompanies(Pageable pageable);
 }
