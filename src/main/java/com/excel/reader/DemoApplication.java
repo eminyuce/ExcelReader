@@ -2,6 +2,7 @@ package com.excel.reader;
 
 import com.excel.reader.service.CompanyService;
 import com.excel.reader.service.ExcelJsonWriter;
+import com.excel.reader.service.ImageCompressionService;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -12,7 +13,8 @@ public class DemoApplication {
     public static void main(String[] args) {
         ApplicationContext context = SpringApplication.run(DemoApplication.class);
         //processExcelFilesFromDirectoryPath(args, context);
-        generateCompanyPlaceDataFromGooglePlaceAPI(args, context);
+        //generateCompanyPlaceDataFromGooglePlaceAPI(args, context);
+        context.getBean(ImageCompressionService.class).processImages(80);
     }
 
     private static void generateCompanyPlaceDataFromGooglePlaceAPI(String[] args, ApplicationContext context) {
