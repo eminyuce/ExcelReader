@@ -9,6 +9,8 @@ import com.excel.reader.model.ExportImportOtherSpecification;
 import com.excel.reader.repo.ExportImportOtherRespository;
 import com.excel.reader.service.EntityExcelHelper;
 import com.excel.reader.service.ExportImportOtherService;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.microsoft.sqlserver.jdbc.SQLServerDataTable;
 import com.microsoft.sqlserver.jdbc.SQLServerPreparedStatement;
 import jakarta.persistence.EntityManager;
@@ -27,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.sql.DataSource;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.Types;
 import java.util.List;
@@ -47,7 +50,7 @@ public class ExportImportOtherServiceImpl implements ExportImportOtherService {
 
     @TimedExecution("StoredProcedureQuery.ExportImportOthersType.saveAll")
     public void saveAll(List<ExportImportOther> otherBatch) {
-        this.batchInsert(otherBatch);
+        this.batchInsertPostgreSQL(otherBatch);
     }
 
     @TimedExecution("exportExportImportOtherBySearchParams")
@@ -195,6 +198,48 @@ public class ExportImportOtherServiceImpl implements ExportImportOtherService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to execute batch insert", e);
         }
+    }
+
+
+    @Transactional
+    public int batchInsertPostgreSQL(List<ExportImportOther> entities) {
+        List<ExportImportOtherDTO> dtos = entities.stream()
+                .map(r -> ExportImportOtherDTO.convertToDTO(r))
+                .collect(Collectors.toList());
+
+        try (Connection connection = DataSourceUtils.getConnection(dataSource)) {
+
+            // Convert DTOs to JSON
+            ObjectMapper objectMapper = new ObjectMapper();
+            String jsonData = null;
+            try {
+                jsonData = objectMapper.writeValueAsString(dtos);
+            } catch (JsonProcessingException ex) {
+                throw new RuntimeException(ex);
+            }
+
+            // Prepare the stored procedure call
+            String callProcedure = "{? = call usp_batch_insert_export_import_others(?)}";
+
+            try (CallableStatement stmt = connection.prepareCall(callProcedure)) {
+                // Register the return parameter
+                stmt.registerOutParameter(1, Types.INTEGER);
+
+                // Set the JSON parameter
+                stmt.setString(2, jsonData);
+
+                // Execute the stored procedure
+                stmt.execute();
+
+                // Get the affected rows
+                int affectedRows = stmt.getInt(1);
+                System.out.println("Affected rows: " + affectedRows);
+                return affectedRows;
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to execute batch insert for export_import_others", e);
+        }
+
     }
 
     // It did not work out because its file name in DB does not have Turkish chars, file name in file system has Turkish Chars

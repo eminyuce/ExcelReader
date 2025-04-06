@@ -68,12 +68,12 @@ public class CompanyService {
     public void generateCompanyPlaceDataFromGooglePlaceAPI(int size) {
         int page = 0;
         boolean hasMoreData = true;
-        BATCH_COMPANY_SIZE=size;
+        BATCH_COMPANY_SIZE = size;
 
         while (hasMoreData) {
             Pageable pageable = PageRequest.of(page, size);
             Page<Tuple> companyPage = exportImportAralikRepository.findMinIdAndGroupedCompanies(pageable);
-            printCompanyInfo(companyPage,"aralik");
+            printCompanyInfo(companyPage, "aralik");
 
             // Check if there are more pages
             hasMoreData = companyPage.hasNext();
@@ -87,7 +87,7 @@ public class CompanyService {
         while (hasMoreData) {
             Pageable pageable = PageRequest.of(page, size);
             Page<Tuple> companyPage = exportImportOtherRepository.findMinIdAndGroupedCompanies(pageable);
-            printCompanyInfo(companyPage,"others");
+            printCompanyInfo(companyPage, "others");
 
             // Check if there are more pages
             hasMoreData = companyPage.hasNext();
@@ -110,12 +110,12 @@ public class CompanyService {
 
             // Process sender and receiver companies
             try {
-                processCompany(id, gonderiSirket,companyType);
+                processCompany(id, gonderiSirket, companyType);
             } catch (Exception e) {
                 log.error("processCompany Exception", e);
             }
             try {
-                processCompany(id, aliciSirket,companyType);
+                processCompany(id, aliciSirket, companyType);
             } catch (Exception e) {
                 log.error("processCompany Exception", e);
             }
@@ -150,7 +150,7 @@ public class CompanyService {
         } else {
             // First time seeing this company - try to fetch and save it
             try {
-                Company company = fetchAndSaveCompany(recordId, companyName,companyType);
+                Company company = fetchAndSaveCompany(recordId, companyName, companyType);
 
                 // Create a new lookup entry with successful processing
                 CompanyLookup newLookup = new CompanyLookup();
@@ -320,7 +320,7 @@ public class CompanyService {
                         dto.getPlaceType(),            // String (NVARCHAR)
                         dto.getRating(),               // Float (FLOAT)
                         dto.getTotalRatings(),         // Integer (INTEGER)
-                        dto.getWebsite()   ,            // String (NVARCHAR)
+                        dto.getWebsite(),            // String (NVARCHAR)
                         dto.getCompanyType()
                 );
             }

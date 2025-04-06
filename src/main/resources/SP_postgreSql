@@ -1,0 +1,113 @@
+CREATE OR REPLACE FUNCTION usp_batch_insert_export_import_others(
+    p_batch_data json
+)
+RETURNS INTEGER AS $$
+DECLARE
+    affected_rows INTEGER;
+BEGIN
+    -- Create temporary table
+    CREATE TEMPORARY TABLE temp_export_import_others (
+        alici_adi VARCHAR,
+        fatura_tutari VARCHAR,
+        fatura_tutari_doviz_turu_kodu VARCHAR,
+        file_name VARCHAR,
+        gidecegi_ulke_adi VARCHAR,
+        gidecegi_ulke_kodu VARCHAR,
+        gonderici_alici_adi VARCHAR,
+        gonderici_alici_vergi_no VARCHAR,
+        gtip_aciklamasi VARCHAR,
+        gtip_kodu VARCHAR,
+        hesaplanmis_kalem_kiymeti_usd_degeri VARCHAR,
+        istatistiki_kiymet_usd_degeri VARCHAR,
+        kalem_rejim_aciklamasi VARCHAR,
+        kalem_rejim_aciklmasi VARCHAR,
+        kalem_rejim_kodu VARCHAR,
+        kalem_sira_no VARCHAR,
+        mense_ulke_adi VARCHAR,
+        mense_ulke_kodu VARCHAR,
+        net_agirlik_kg VARCHAR,
+        olcu_birimi_aciklamasi VARCHAR,
+        olcu_esya_miktari VARCHAR,
+        row_int INTEGER,
+        sheet_name VARCHAR,
+        tcgb_gumruk_idaresi_adi VARCHAR,
+        tcgb_gumruk_idaresi_kodu VARCHAR,
+        tcgb_kapanis_tarihi VARCHAR,
+        tcgb_statu_aciklamasi VARCHAR,
+        tcgb_tescil_no VARCHAR,
+        tcgb_tescil_tarihi VARCHAR,
+        teslim_sekli_kodu VARCHAR,
+        ticari_tanimi VARCHAR
+    ) ON COMMIT DROP;
+
+    -- Insert data from JSON parameter into temporary table
+    INSERT INTO temp_export_import_others (
+        alici_adi, fatura_tutari, fatura_tutari_doviz_turu_kodu, file_name,
+        gidecegi_ulke_adi, gidecegi_ulke_kodu, gonderici_alici_adi,
+        gonderici_alici_vergi_no, gtip_aciklamasi, gtip_kodu,
+        hesaplanmis_kalem_kiymeti_usd_degeri, istatistiki_kiymet_usd_degeri,
+        kalem_rejim_aciklamasi, kalem_rejim_aciklmasi, kalem_rejim_kodu,
+        kalem_sira_no, mense_ulke_adi, mense_ulke_kodu, net_agirlik_kg,
+        olcu_birimi_aciklamasi, olcu_esya_miktari, row_int, sheet_name,
+        tcgb_gumruk_idaresi_adi, tcgb_gumruk_idaresi_kodu, tcgb_kapanis_tarihi,
+        tcgb_statu_aciklamasi, tcgb_tescil_no, tcgb_tescil_tarihi,
+        teslim_sekli_kodu, ticari_tanimi
+    )
+    SELECT
+        (item->>'alici_adi')::VARCHAR,
+        (item->>'fatura_tutari')::VARCHAR,
+        (item->>'fatura_tutari_doviz_turu_kodu')::VARCHAR,
+        (item->>'file_name')::VARCHAR,
+        (item->>'gidecegi_ulke_adi')::VARCHAR,
+        (item->>'gidecegi_ulke_kodu')::VARCHAR,
+        (item->>'gonderici_alici_adi')::VARCHAR,
+        (item->>'gonderici_alici_vergi_no')::VARCHAR,
+        (item->>'gtip_aciklamasi')::VARCHAR,
+        (item->>'gtip_kodu')::VARCHAR,
+        (item->>'hesaplanmis_kalem_kiymeti_usd_degeri')::VARCHAR,
+        (item->>'istatistiki_kiymet_usd_degeri')::VARCHAR,
+        (item->>'kalem_rejim_aciklamasi')::VARCHAR,
+        (item->>'kalem_rejim_aciklmasi')::VARCHAR,
+        (item->>'kalem_rejim_kodu')::VARCHAR,
+        (item->>'kalem_sira_no')::VARCHAR,
+        (item->>'mense_ulke_adi')::VARCHAR,
+        (item->>'mense_ulke_kodu')::VARCHAR,
+        (item->>'net_agirlik_kg')::VARCHAR,
+        (item->>'olcu_birimi_aciklamasi')::VARCHAR,
+        (item->>'olcu_esya_miktari')::VARCHAR,
+        (item->>'row_int')::INTEGER,
+        (item->>'sheet_name')::VARCHAR,
+        (item->>'tcgb_gumruk_idaresi_adi')::VARCHAR,
+        (item->>'tcgb_gumruk_idaresi_kodu')::VARCHAR,
+        (item->>'tcgb_kapanis_tarihi')::VARCHAR,
+        (item->>'tcgb_statu_aciklamasi')::VARCHAR,
+        (item->>'tcgb_tescil_no')::VARCHAR,
+        (item->>'tcgb_tescil_tarihi')::VARCHAR,
+        (item->>'teslim_sekli_kodu')::VARCHAR,
+        (item->>'ticari_tanimi')::VARCHAR
+    FROM json_array_elements(p_batch_data) AS item;
+
+    -- Insert into main table
+    INSERT INTO export_import_others (
+        alici_adi, fatura_tutari, fatura_tutari_doviz_turu_kodu, file_name,
+        gidecegi_ulke_adi, gidecegi_ulke_kodu, gonderici_alici_adi,
+        gonderici_alici_vergi_no, gtip_aciklamasi, gtip_kodu,
+        hesaplanmis_kalem_kiymeti_usd_degeri, istatistiki_kiymet_usd_degeri,
+        kalem_rejim_aciklamasi, kalem_rejim_aciklmasi, kalem_rejim_kodu,
+        kalem_sira_no, mense_ulke_adi, mense_ulke_kodu, net_agirlik_kg,
+        olcu_birimi_aciklamasi, olcu_esya_miktari, row_int, sheet_name,
+        tcgb_gumruk_idaresi_adi, tcgb_gumruk_idaresi_kodu, tcgb_kapanis_tarihi,
+        tcgb_statu_aciklamasi, tcgb_tescil_no, tcgb_tescil_tarihi,
+        teslim_sekli_kodu, ticari_tanimi
+    )
+    SELECT * FROM temp_export_import_others;
+
+    -- Get affected rows
+    GET DIAGNOSTICS affected_rows = ROW_COUNT;
+
+    RETURN affected_rows;
+
+EXCEPTION WHEN OTHERS THEN
+    RAISE EXCEPTION 'Error in usp_batch_insert_export_import_others: %', SQLERRM;
+END;
+$$ LANGUAGE plpgsql;
