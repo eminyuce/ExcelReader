@@ -3,6 +3,7 @@ package com.excel.reader;
 import com.excel.reader.service.CompanyService;
 import com.excel.reader.service.ExcelJsonWriter;
 import com.excel.reader.service.ImageCompressionService;
+import com.excel.reader.service.ImageGenerator2;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
@@ -28,7 +29,7 @@ public class DemoApplication {
 
         //extracted();
 
-        //extracted1();
+        ImageGenerator2.generateImage();
         // extracted2();
     }
 
@@ -37,23 +38,16 @@ public class DemoApplication {
 
         String[] educationList = new String[]
                 {
-                        "Geleneksel Çin Tıbbı Danışmanlığı",
-                        "Psikolojik Manevi Danışmanlığı",
-                        "RDT - Rayestezik Duygu Temizliği Danışmanlığı",
-                        "Tıbbi Nebevi Hacamat, Sülük Danışmanlığı",
-                        "Numeroloji, İsim ve Doğum Tarihi Hesaplama Danışmanlığı",
-                        "Yaşam Koçluğu Danışmanlığı"
-
-
+                        "Amerika vatandaşıyım. Ciddi, sevgiye dayalı bir ilişki ve evlilik isteyen, birlikte Amerika’da bir hayat kurmayı hayal eden biriyle tanışmak isterim."
                 };
 
         for (int i = 1; i < 7; i++) {
-            generateDanismanlikImages(i, educationList[i-1]);
+            generateImages(i, educationList[i-1]);
         }
     }
 
 
-    private static void generateDanismanlikImages(int index, String text) {
+    private static void generateImages(int index, String text) {
         // Image settings
         int width = 800;
         int height = 800;
@@ -185,9 +179,9 @@ public class DemoApplication {
     }
 
     private static void extracted1() {
-        File inputFolder = new File("C:\\Users\\eminy\\OneDrive\\Masaüstü\\ruh-beden\\WB02L08B3\\Crizal - Multipurpose Responsive Template + Admin\\crizal\\img\\logos\\original");  // Resimlerin olduğu klasör
-        File logoFile = new File("C:\\Users\\eminy\\OneDrive\\Masaüstü\\ruh-beden\\WB02L08B3\\Crizal - Multipurpose Responsive Template + Admin\\crizal\\img\\logos\\chatgpt-logo.png");        // Kullanılacak logo
-        File outputFolder = new File("C:\\Users\\eminy\\OneDrive\\Masaüstü\\ruh-beden\\WB02L08B3\\Crizal - Multipurpose Responsive Template + Admin\\crizal\\img\\logos\\output_logo2");
+        File inputFolder = new File("C:\\Users\\YUCE\\Downloads\\WB0C89H44 (2)\\Fabrex - Multipurpose Business and Admin Template\\fabrex\\img\\logos\\original");  // Resimlerin olduğu klasör
+        File logoFile = new File("C:\\Users\\YUCE\\Downloads\\WB0C89H44 (2)\\Fabrex - Multipurpose Business and Admin Template\\fabrex\\img\\logos\\chatgpt-logo.png");        // Kullanılacak logo
+        File outputFolder = new File("C:\\Users\\YUCE\\Downloads\\WB0C89H44 (2)\\Fabrex - Multipurpose Business and Admin Template\\fabrex\\img\\logos\\output_logo2");
 
         if (!outputFolder.exists()) {
             outputFolder.mkdirs();
