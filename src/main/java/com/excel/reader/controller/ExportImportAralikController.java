@@ -32,7 +32,8 @@ public class ExportImportAralikController extends BaseController {
     @Operation(summary = "Export ExportImportAralik data as Excel",
             description = "Export filtered, sorted, and paginated ExportImportAralik data as Excel file")
     public @ResponseBody ResponseEntity<Resource> exportExportImportAralikBySearchParams(
-            @RequestBody ExportImportAralikSearchParams exportImportAralikSearchParams, @RequestHeader HttpHeaders headers) {
+            @RequestBody ExportImportAralikSearchParams exportImportAralikSearchParams,
+            @RequestHeader HttpHeaders headers) {
 
         String action = "ExportImportAralikExportXls";
         String user = LogUtil.getUser(headers);
