@@ -34,9 +34,6 @@ public class ExcelJsonWriter {
     // Batch size - adjust this value based on your needs
     static int BATCH_SIZE = 50000;
 
-    // Progress logging interval
-    static int PROGRESS_LOG_INTERVAL = 10000;
-
     @Autowired
     private ImportOtherService importOtherService;
 
@@ -129,17 +126,6 @@ public class ExcelJsonWriter {
         log.info("The file exists: {}", filePath);
         String normalizedFileName = file.getName();
 
-        // Determine entity type
-        String entityType;
-        if (file.getAbsolutePath().toUpperCase().contains("IMPORT")) {
-            entityType = "ImportOther";
-        } else if (normalizedFileName.toUpperCase().contains("Aralık".toUpperCase())) {
-            entityType = "ExportImportAralik";
-        } else {
-            entityType = "ExportImportOther";
-        }
-        log.info("Processing file as entity type: {}", entityType);
-
         // Batch lists for Aralik and Other entities
         List<ImportOther> importOtherBatch = new ArrayList<>(BATCH_SIZE);
         List<ExportImportAralik> aralikBatch = new ArrayList<>(BATCH_SIZE);
@@ -154,15 +140,12 @@ public class ExcelJsonWriter {
             for (Sheet sheet : workbook) {
                 log.info("Reading Sheet: {}", sheet.getSheetName());
                 int lastRowNumber = findLastRowNumber(report);
-                int startingRow = lastRowNumber + 1;
-                log.info("Starting processing from row: {}", startingRow);
                 boolean isFirstRow = true;
                 List<String> headers = new ArrayList<>();
-                int processedRows = 0;
 
                 for (Row row : sheet) {
-                    int rowNumber = row.getRowNum() + 1;
                     try {
+                        int rowNumber = row.getRowNum() + 1;
 
                         if (isFirstRow) {
                             isFirstRow = false;
@@ -186,14 +169,10 @@ public class ExcelJsonWriter {
                         // Convert row to JSON
                         String rowJson = getRowJson(rowData);
 
-                        processedRows++;
-                        if (processedRows % PROGRESS_LOG_INTERVAL == 0) {
-                            log.info("Processed {} rows so far in sheet: {}", processedRows, sheet.getSheetName());
-                        }
-
                         // YOU SHOULD DEFINE YOUR JAVA ENTITY AND ITS SERVICE AND REPO LAYER FOR BATCH SAVING
-                        if (entityType.equals("ImportOther")) {
+                        if (file.getAbsolutePath().toUpperCase().contains("IMPORT")) {
                             try {
+                                log.debug("ImportOther.rowJson:" + rowJson);
                                 var item = objectMapper.readValue(rowJson, ImportOther.class);
                                 item.setFileName(normalizedFileName);
                                 item.setSheetName(sheet.getSheetName());
@@ -205,14 +184,15 @@ public class ExcelJsonWriter {
                                 // Check if batch size reached
                                 if (importOtherBatch.size() >= BATCH_SIZE) {
                                     importOtherService.saveAll(importOtherBatch);
-                                    log.info("Saved batch of {} {} records", importOtherBatch.size(), entityType);
+                                    log.info("Saved batch of {} importOtherBatch records", importOtherBatch.size());
                                     importOtherBatch.clear();
                                 }
                             } catch (JsonProcessingException e) {
-                                log.error("JsonProcessingException for {} at row {}: {}", entityType, rowNumber, e.getMessage(), e);
+                                log.error("ExportImportAralik Exception:", e);
                             }
-                        } else if (entityType.equals("ExportImportAralik")) {
+                        } else if (normalizedFileName.toUpperCase().contains("Aralık".toUpperCase())) {
                             try {
+                                log.debug("ExportImportAralik.rowJson:" + rowJson);
                                 var item = objectMapper.readValue(rowJson, ExportImportAralik.class);
                                 item.setFileName(normalizedFileName);
                                 item.setSheetName(sheet.getSheetName());
@@ -224,14 +204,15 @@ public class ExcelJsonWriter {
                                 // Check if batch size reached
                                 if (aralikBatch.size() >= BATCH_SIZE) {
                                     exportImportAralikService.saveAll(aralikBatch);
-                                    log.info("Saved batch of {} {} records", aralikBatch.size(), entityType);
+                                    log.info("Saved batch of {} Aralik records", aralikBatch.size());
                                     aralikBatch.clear();
                                 }
                             } catch (JsonProcessingException e) {
-                                log.error("JsonProcessingException for {} at row {}: {}", entityType, rowNumber, e.getMessage(), e);
+                                log.error("ExportImportAralik Exception:", e);
                             }
                         } else {
                             try {
+                                log.debug("ExportImportOther.rowJson:" + rowJson);
                                 var item = objectMapper.readValue(rowJson, ExportImportOther.class);
                                 item.setFileName(normalizedFileName);
                                 item.setSheetName(sheet.getSheetName());
@@ -243,38 +224,35 @@ public class ExcelJsonWriter {
                                 // Check if batch size reached
                                 if (otherBatch.size() >= BATCH_SIZE) {
                                     exportImportOtherService.saveAll(otherBatch);
-                                    log.info("Saved batch of {} {} records", otherBatch.size(), entityType);
+                                    log.info("Saved batch of {} Other records", otherBatch.size());
                                     otherBatch.clear();
                                 }
                             } catch (JsonProcessingException e) {
-                                log.error("JsonProcessingException for {} at row {}: {}", entityType, rowNumber, e.getMessage(), e);
+                                log.error("ExportImportOther:", e);
                             }
                         }
                     } catch (Exception e) {
-                        log.error("Exception processing row {} in sheet {}: {}", rowNumber, sheet.getSheetName(), e.getMessage(), e);
+                        log.error("Exception", e);
                     }
                 }
 
-                log.info("Total rows processed in sheet {}: {}", sheet.getSheetName(), processedRows);
-
-                // Save remaining ImportOther records
                 if (!importOtherBatch.isEmpty()) {
                     importOtherService.saveAll(importOtherBatch);
-                    log.info("Saved final batch of {} {} records", importOtherBatch.size(), entityType);
+                    log.info("Saved final batch of {} importOtherBatch records", importOtherBatch.size());
                     importOtherBatch.clear();
                 }
 
                 // Save remaining Aralik records
                 if (!aralikBatch.isEmpty()) {
                     exportImportAralikService.saveAll(aralikBatch);
-                    log.info("Saved final batch of {} {} records", aralikBatch.size(), entityType);
+                    log.info("Saved final batch of {} Aralik records", aralikBatch.size());
                     aralikBatch.clear();
                 }
 
                 // Save remaining Other records
                 if (!otherBatch.isEmpty()) {
                     exportImportOtherService.saveAll(otherBatch);
-                    log.info("Saved final batch of {} {} records", otherBatch.size(), entityType);
+                    log.info("Saved final batch of {} Other records", otherBatch.size());
                     otherBatch.clear();
                 }
 
